@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base{
+    .hidden-toggleMenu{
+        @apply hidden fixed left-0 top-0 h-16 w-full bg-gray-500 md:block md:mt-0
+    }
+    .show-toggleMenu{
+        @apply block fixed left-0 top-0 mt-16 w-full bg-gray-500 md:hidden
+    }
+    .top-8\.5 {
+        top: 2.1rem;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+}
