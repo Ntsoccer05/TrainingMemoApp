@@ -21,6 +21,7 @@ on:
       - 'src/app/**'
       - 'src/routes/**'
       - 'src/composer.json'
+  workflow_dispatch:
 
 permissions:
   id-token: write
