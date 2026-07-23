@@ -7,6 +7,7 @@ use App\Models\RecordMenu;
 use App\Models\RecordContent;
 use App\Models\RecordState;
 use App\Services\RecordContent\RecordContentService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class RecordContentController extends Controller
@@ -70,9 +71,20 @@ class RecordContentController extends Controller
         }
         // メニュー選択画面にて記録済みメニューをマーキング
         if(isset($recorded_at)){
-            $record = $recordState->where('user_id', $user_id)->where('recorded_at', $recorded_at)->first()->load(['recordMenus']);
+            $record = $recordState->where('user_id', $user_id)->where('recorded_at', $recorded_at)->first();
             // 初期化
             $recordContent=[];
+            // その日のRecordStateがまだ存在しない場合(直接URLでアクセスした場合など)は、
+            // メニュー未登録の状態として返す(record_idはnullとし、日付は表示のためリクエストの値を整形して使う)
+            if(is_null($record)){
+                $recordContent['recorded_at'] = [
+                    "record_id"=>null,
+                    "recorded_at"=>Carbon::parse($recorded_at)->toDateString()
+                ];
+                $recordContents[] = $recordContent;
+                return response()->json(["status_code" => 200, "message" => "選択した日付のデータを取得", 'records'=>$recordContents]);
+            }
+            $record->load(['recordMenus']);
             $recorded_at = [
                 "record_id"=>$record->id,
                 "recorded_at"=>$record->recorded_at
