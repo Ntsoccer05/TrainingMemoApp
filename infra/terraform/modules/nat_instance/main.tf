@@ -82,6 +82,13 @@ resource "aws_instance" "nat" {
   tags = {
     Name = "${var.project_name}-nat-instance"
   }
+
+  lifecycle {
+    # most_recent = true のAMIデータソースは新しいAMIがリリースされるたびにドリフトを検知してしまい、
+    # 意図しないタイミングでNATインスタンスの置き換え(短時間のネットワーク断)が走ってしまう。
+    # AMI更新は人が意図的に判断して行うものとし、Terraformの自動追跡からは外す。
+    ignore_changes = [ami]
+  }
 }
 
 resource "aws_eip" "nat" {
