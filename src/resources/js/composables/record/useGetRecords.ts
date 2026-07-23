@@ -33,7 +33,12 @@ export default function useGetRecords() {
     const compGetData = ref<Boolean>(false);
     const isLoaded = ref<boolean>(false);
 
-    const getRecords = async (user_id: Number, recorded_at: String = "") => {
+    const getRecords = async (
+        user_id: Number,
+        recorded_at: String = "",
+        from?: String,
+        to?: String
+    ) => {
         await axios
             .get("/api/recordContent", {
                 // get時にパラメータを渡す際はparamsで指定が必要
@@ -41,6 +46,8 @@ export default function useGetRecords() {
                     // keyとvalueが同じためuser_id:user_idの「:user_id」を省略できる
                     user_id,
                     recorded_at,
+                    from,
+                    to,
                 },
             })
             .then((res: AxiosResponse<Data>) => {

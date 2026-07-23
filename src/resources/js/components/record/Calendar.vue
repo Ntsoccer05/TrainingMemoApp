@@ -7,6 +7,7 @@ import { useStore } from "vuex";
 import useGetLoginUser from "../../composables/certification/useGetLoginUser";
 import useSelectedDay from "../../composables/record/useSelectedDay";
 import useGetRecords from "../../composables/record/useGetRecords";
+import { DispRecords } from "../../types/record";
 import axios from "axios";
 import { reactive, ref, computed, ComputedRef, watch, onMounted, nextTick } from "vue";
 import userSessionStorage from "../../utils/userSessionStorage";
@@ -72,16 +73,51 @@ type Data = {
   [key: string]: string;
 };
 
-// 当日をハイライト
-const attrs = ref<(Attrs | Event | Obj)[]>([
+// 当日をハイライト・選択日ハイライトなど、記録データ以外の属性
+const extraAttrs = ref<(Attrs | Obj)[]>([
   { key: "today", highlight: true, dates: new Date() },
 ]);
 
 const holidays = ref<string[]>([]);
 let data = reactive<Data>({});
 
+// 取得済みレコードの蓄積(月をまたいで追加取得した結果をマージしていく)
+const allRecords = ref<DispRecords[]>([]);
+// 取得済み月("YYYY-MM")を記録し、同じ月を二重に取得しないようにする
+const fetchedMonths = new Set<string>();
+
+const monthKey = (year: number, month: number): string =>
+  `${year}-${String(month).padStart(2, "0")}`;
+
+const pad2 = (n: number): string => String(n).padStart(2, "0");
+
 // データ取得完了したかどうか
 // const isLoaded = ref<boolean>(false);
+
+const recordEvents = computed<Event[]>(() => {
+  return allRecords.value.map((record) => {
+    const label =
+      record.menu !== undefined ? record.menu[0].menu_content : "記録がありません";
+    return {
+      popover: {
+        label: label,
+        visibility: "click",
+        autoHide: false,
+      },
+      bar: {
+        style: {
+          backgroundColor: "red",
+        },
+      },
+      dates: new Date(record.recorded_at.recorded_at.replace(/-/g, "/") as string),
+    };
+  });
+});
+
+const attrs = computed<(Attrs | Event | Obj)[]>(() => [
+  ...extraAttrs.value,
+  ...recordEvents.value,
+]);
 
 const dispAlertModal = ref(false);
 
@@ -106,42 +142,22 @@ const { getSessionLoginUser } = userSessionStorage();
 const { records, compGetData, isLoaded, getRecords } = useGetRecords();
 
 watch(records, () => {
-  let label: string = "";
-  records.value.forEach((record) => {
-    if (record.menu !== undefined) {
-      label = record.menu[0].menu_content;
-    } else {
-      label = "記録がありません";
-    }
-    const event: Event = {
-      popover: {
-        label: label,
-        visibility: "click",
-        autoHide: false,
-      },
-      bar: {
-        style: {
-          backgroundColor: "red",
-        },
-      },
-      // safariだと年-月-日だとNanとなるため年/月/日に変更
-      dates: new Date(record.recorded_at.recorded_at.replace(/-/g, "/") as string),
-    };
-    attrs.value = [...attrs.value, event];
-  });
+  const existingIds = new Set(allRecords.value.map((r) => r.recorded_at.record_id));
+  const toAdd = records.value.filter((r) => !existingIds.has(r.recorded_at.record_id));
+  if (toAdd.length > 0) {
+    allRecords.value = [...allRecords.value, ...toAdd];
+  }
 });
 
 watch(holidays.value, () => {
-  holidays.value.forEach((holiday) => {
-    const obj: Obj = {
-      dot: true,
-      // Text styles
-      content: "red",
-      // safariだと年-月-日だとNanとなるため年/月/日に変更
-      dates: new Date(holiday.replace(/-/g, "/") as string),
-    };
-    attrs.value = [...attrs.value, obj];
-  });
+  const holidayObjs: Obj[] = holidays.value.map((holiday) => ({
+    dot: true,
+    // Text styles
+    content: "red",
+    // safariだと年-月-日だとNanとなるため年/月/日に変更
+    dates: new Date(holiday.replace(/-/g, "/") as string),
+  }));
+  extraAttrs.value = [...extraAttrs.value, ...holidayObjs];
 });
 
 const toLogin = () => {
@@ -186,9 +202,35 @@ const menuScroll = (calendarDom) => {
       // safariだと年-月-日だとNanとなるため年/月/日に変更
       dates: new Date((fromPath.value as string).replace(/-/g, "/")),
     };
-    attrs.value = [...attrs.value, obj];
+    extraAttrs.value = [...extraAttrs.value, obj];
   } else {
     router.push({ name: "home", query: { day: fromPath.value } });
+  }
+};
+
+// year/monthからその月の月初・月末の"YYYY-MM-DD"文字列を計算する
+const monthRange = (year: number, month: number): { from: string; to: string } => {
+  const from = `${year}-${pad2(month)}-01`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const to = `${year}-${pad2(month)}-${pad2(lastDay)}`;
+  return { from, to };
+};
+
+// v-calendarの月移動を検知し、未取得の月であれば追加取得する
+const onPageChange = async (page: { month: number; year: number }) => {
+  const key = monthKey(page.year, page.month);
+  if (fetchedMonths.has(key)) {
+    return;
+  }
+  const { from, to } = monthRange(page.year, page.month);
+  // getRecords()は内部でエラーをcatchして握りつぶすため例外は投げられない。
+  // 成功時は必ずrecords.valueがres.data.recordsという新しい配列参照に置き換わる一方、
+  // 失敗時(.catch内)はrecords.valueに一切触れないため参照は変化しない。
+  // これを利用してこの呼び出しが実際に成功したかどうかを判定する。
+  const beforeRecords = records.value;
+  await getRecords(loginUser.value.id || 0, "", from, to);
+  if (records.value !== beforeRecords) {
+    fetchedMonths.add(key);
   }
 };
 
@@ -202,10 +244,21 @@ onMounted(async () => {
     await getLoginUser();
   }
   getHolidays();
+  const today = new Date();
+  const startMonth = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+  const initialFrom = `${startMonth.getFullYear()}-${pad2(startMonth.getMonth() + 1)}-01`;
+  const initialTo = `${today.getFullYear()}-${pad2(today.getMonth() + 1)}-${pad2(today.getDate())}`;
+  // 直近3ヶ月分(当月+過去2ヶ月)を先に取得済みとして記録することで、
+  // v-calendarの初回マウント時に発火するupdate:to-pageイベントによる
+  // 重複フェッチを防ぐ(初回フェッチ自体はfetchedMonthsの状態に関わらず必ず実行される)
+  for (let i = 0; i <= 2; i++) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    fetchedMonths.add(monthKey(d.getFullYear(), d.getMonth() + 1));
+  }
   if (loginUser.value.id) {
-    await getRecords(loginUser.value.id);
+    await getRecords(loginUser.value.id, "", initialFrom, initialTo);
   } else {
-    await getRecords(0);
+    await getRecords(0, "", initialFrom, initialTo);
   }
   isLoaded.value = true;
   emits("compGetData", true);
@@ -258,7 +311,7 @@ const selectedDay = (day) => {
     day = day[0].replace(/年|月/g, "-");
     changeDayFormat(day);
     const isRecord = ref(false);
-    for (let record of records.value) {
+    for (let record of allRecords.value) {
       if (record.recorded_at.recorded_at === selected_day.value) {
         isRecord.value = true;
       }
@@ -324,6 +377,7 @@ const moveToday = () => {
         locale="ja-jp"
         :attributes="attrs"
         @click="selectedDay($event.target)"
+        @update:to-page="onPageChange"
       >
         <!-- Calendarの中に以下でもタイトル名変更可能
           :masks = masks -->
@@ -338,7 +392,7 @@ const moveToday = () => {
           </div>
           <div class="text-xs text-gray-300 font-semibold text-center">鍛えた部位</div>
           <div class="text-xs text-gray-300 font-semibold text-center">
-            <span v-for="record in records" :key="record.recorded_at.recorded_at">
+            <span v-for="record in allRecords" :key="record.recorded_at.recorded_at">
               <template
                 v-if="
                   record.recorded_at.recorded_at ==
@@ -370,7 +424,7 @@ const moveToday = () => {
             </span>
           </div>
           <div class="text-xs text-gray-300 font-semibold text-center">メニュー</div>
-          <span v-for="record in records" :key="record.recorded_at.recorded_at">
+          <span v-for="record in allRecords" :key="record.recorded_at.recorded_at">
             <template
               v-if="
                 record.recorded_at.recorded_at ==

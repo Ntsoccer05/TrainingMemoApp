@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RecordContent\GetRecordContentsRequest;
 use App\Models\RecordMenu;
 use App\Models\RecordContent;
 use App\Models\RecordState;
+use App\Services\RecordContent\RecordContentService;
 use Illuminate\Http\Request;
 
 class RecordContentController extends Controller
 {
-    public function index(Request $request, RecordMenu $recordMenu, RecordState $recordState){
+    public function index(GetRecordContentsRequest $request, RecordMenu $recordMenu, RecordState $recordState, RecordContentService $recordContentService){
         $tgtRecords = Null;
 
         $user_id = $request->user_id;
@@ -24,9 +26,7 @@ class RecordContentController extends Controller
 
         // ホーム画面で記録の詳細表示
         if(!$category_id && !$recorded_at){
-            //親テーブルがあると子供のデータ取得時に呼び出した親のデータも一緒に取得できる。
-            //load()によってN+1問題対応 load()の引数はModels/RecordState.phpの関数名
-            $records = $recordState->where('user_id', $user_id)->get()->load(['recordMenus']);
+            $records = $recordContentService->getRecordsInRange($user_id, $request->resolvedFrom(), $request->resolvedTo());
             //記録日の重複削除
             $records = $records->unique('recorded_at');
             foreach($records as $record){
@@ -35,14 +35,12 @@ class RecordContentController extends Controller
                 $menu = [];
                 $category = [];
 
-                $recordMenus = $record->recordMenus;
+                $tgtRecordMenu = $record->recordMenus;
                 $recorded_at = [
                     "record_id"=>$record->id,
                     "recorded_at"=>$record->recorded_at
                 ];
-                $hasRecordMenu = $recordMenu->where('record_state_id', $record->id)->exists();
-                //load()によってN+1問題対応 load()の引数はModels/RecordMenu.phpの関数名
-                $tgtRecordMenu = $recordMenu->where('record_state_id', $record->id)->get()->load(['menu', 'category']);
+                $hasRecordMenu = $tgtRecordMenu->isNotEmpty();
                 $recordContent['recorded_at']=$recorded_at;
                 // メニュー登録がある場合
                 if($hasRecordMenu){

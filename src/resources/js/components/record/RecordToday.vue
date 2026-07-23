@@ -2,7 +2,7 @@
   <p class="text-red-500 text-center font-bold text-lg mb-5" v-if="loginUser.id">
     ※記録なし、セット数０のデータは毎朝４時に削除されます
   </p>
-  <template v-if="isLoaded && compGetData">
+  <template v-if="compGetData">
     <form @submit.prevent="record">
       <button
         type="submit"
@@ -37,7 +37,6 @@ import { useStore } from "vuex";
 import useGetLoginUser from "../../composables/certification/useGetLoginUser";
 import useSelectedDay from "../../composables/record/useSelectedDay";
 import axios from "axios";
-import useGetRecords from "../../composables/record/useGetRecords";
 import userSessionStorage from "../../utils/userSessionStorage";
 
 const props = defineProps<{
@@ -64,11 +63,6 @@ onMounted(async () => {
   }
   // ログイン状態をVuexより取得<-このタイミングだとカレンダーの描画が完了しているためVuexの値を取得できる。
   isLogined.value = computed(() => store.state.isLogined);
-  if (loginUser.value.id) {
-    await getRecords(loginUser.value.id);
-  } else {
-    await getRecords(0);
-  }
 });
 
 const toLogin = (): void => {
@@ -83,8 +77,6 @@ const alertLogin = (): void => {
 };
 
 const { selectedDay, postDay } = useSelectedDay(date);
-
-const { isLoaded, getRecords } = useGetRecords();
 
 selectedDay();
 

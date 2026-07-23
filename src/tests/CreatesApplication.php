@@ -17,6 +17,11 @@ trait CreatesApplication
 
         $app->make(Kernel::class)->bootstrap();
 
+        // docker-compose.ymlのappサービスがDB_DATABASE等をコンテナの実環境変数として
+        // 注入しているため、.env.testingやphpunit.xmlの<env>では上書きできない。
+        // ここで直接テスト用DBに切り替えることで、テストが開発用DBに接続するのを防ぐ。
+        config(['database.connections.mysql.database' => 'trainingmemo_test']);
+
         return $app;
     }
 }

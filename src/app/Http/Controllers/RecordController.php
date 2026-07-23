@@ -14,28 +14,10 @@ class RecordController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(RecordState $recordState){
-        $latestRecord = NULL;
+    public function index(\App\Services\Record\RecordService $recordService){
+        $latestRecord = $recordService->getLatestRecordState(auth()->id());
 
-        // 最新のデータを取得
-        $isSetUpdated = $recordState->whereNotNull('updated_at')->get();
-        $latestCreated = $recordState->latest('created_at')->first();
-        
-        $createdDateTime = new DateTime($latestCreated->created_at);
-        
-        if(count($isSetUpdated) !== 0){
-            $latestUpdated = $recordState->latest('updated_at')->first();
-            $updatedDateTime = new DateTime($latestUpdated->updated_at);
-            if($createdDateTime < $updatedDateTime){
-                $latestRecord = $latestUpdated;
-            }else{
-                $latestRecord = $latestCreated;
-            }
-            return response()->json(["status_code" => 200, "latestRecord" => $latestRecord,"updatedDateTime"=>$updatedDateTime,"createdDateTime"=>$createdDateTime,"latestUpdated"=>$latestUpdated,"latestCreated"=>$latestCreated,"isSetUpdated"=>$isSetUpdated]);
-        }else{
-            $latestRecord = $latestCreated;
-        }
-        return response()->json(["status_code" => 200, "latestRecord" => $latestRecord,"createdDateTime"=>$createdDateTime,"latestCreated"=>$latestCreated,"isSetUpdated"=>$isSetUpdated]);
+        return response()->json(["status_code" => 200, "latestRecord" => $latestRecord]);
     }
 
     public function create(Request $request)
