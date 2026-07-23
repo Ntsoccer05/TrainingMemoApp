@@ -1,0 +1,88 @@
+# 事前準備: このワークフローを動かす前に、GitHubリポジトリの Settings > Secrets and variables > Actions で
+# シークレット `AWS_GITHUB_ACTIONS_ROLE_ARN` を登録しておくこと。
+# 値: arn:aws:iam::533267300159:role/trainingmemo-github-actions-deploy
+# (infra/bootstrap/ で terraform apply 済みのOIDC用IAMロール)
+#
+# S3バケット名 `trainingmemo-spa-frontend` / Lambda関数名 `trainingmemo-laravel-app` / `trainingmemo-laravel-artisan` は
+# infra/terraform/modules/backend_lambda/main.tf (aws_lambda_function.app / aws_lambda_function.artisan の function_name)
+# および infra/terraform/envs/production/main.tf (module.backend_lambda.deploy_bucket = module.frontend_bucket.bucket_id)
+# と一致させていること。
+#
+# artisan コマンドの実行は HTTP リクエスト処理用の Lambda 関数(trainingmemo-laravel-app, handler = "public/index.php")
+# ではなく、コンソール実行専用の Lambda 関数(trainingmemo-laravel-artisan, handler = "artisan")に対して行う。
+# 両関数とも同じデプロイパッケージ(zip)を使うため、デプロイ時は両方の関数コードを更新する必要がある。
+
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/app/**'
+      - 'src/routes/**'
+      - 'src/composer.json'
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-backend-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+
+      - run: composer install --no-dev --optimize-autoloader --prefer-dist
+
+      - name: Build deployment package
+        run: |
+          zip -r ../backend.zip . -x "node_modules/*" "tests/*" ".git/*"
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ap-northeast-1
+
+      - name: Upload deployment package
+        run: |
+          aws s3 cp ../backend.zip s3://trainingmemo-spa-frontend/backend/${{ github.sha }}.zip
+
+      - name: Update artisan function code
+        run: |
+          aws lambda update-function-code \
+            --function-name trainingmemo-laravel-artisan \
+            --s3-bucket trainingmemo-spa-frontend \
+            --s3-key backend/${{ github.sha }}.zip
+          aws lambda wait function-updated --function-name trainingmemo-laravel-artisan
+
+      - name: Run migrations
+        run: |
+          aws lambda invoke \
+            --function-name trainingmemo-laravel-artisan \
+            --payload '{"cli": "migrate --force"}' \
+            --cli-binary-format raw-in-base64-out \
+            /tmp/migrate-output.json
+          cat /tmp/migrate-output.json
+          if grep -q '"errorMessage"' /tmp/migrate-output.json; then
+            echo "::error::Migration failed"
+            exit 1
+          fi
+
+      - name: Update app function code
+        run: |
+          aws lambda update-function-code \
+            --function-name trainingmemo-laravel-app \
+            --s3-bucket trainingmemo-spa-frontend \
+            --s3-key backend/${{ github.sha }}.zip
+          aws lambda wait function-updated --function-name trainingmemo-laravel-app

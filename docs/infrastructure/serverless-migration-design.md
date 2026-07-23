@@ -277,13 +277,22 @@ infra/
 ## 9. 未確定事項(すべて解消済み)
 
 - [x] ファイルアップロード機能の有無 → **確認済み・機能なし**。`app/`全体・Filamentリソース・Vueフロントエンドいずれにも `Storage::disk`、`FileUpload`、`<input type="file">` 等の実装なし。`users`/`record_contents`テーブルにも画像等のカラムなし。→ **2.2のファイルストレージ変更(`local`→`s3`)は不要**、S3ファイルストレージ用の追加実装・設定は本移行では対応不要と確定。
-- [x] tfstate用S3/DynamoDBの新規要否 → **確認済み・新規作成が必要**。リポジトリ内に既存Terraform資材なし(`.tf`ファイル・`infra/`ディレクトリなし)、AWSアカウント内にもS3バケット0件・DynamoDBテーブル0件で既存のtfstate管理基盤は存在しない。本移行で以下を新規作成する。
+- [x] tfstate用S3/DynamoDBの新規要否 → **確認済み・新規作成が必要**。リポジトリ内に既存Terraform資材なし(`.tf`ファイル・`infra/`ディレクトリなし)。AWSアカウント内には既存S3バケットが3件(`training-memo`: icon.ico/sitemap.xmlのみ, `cf-templates-...`: CloudFormation用, `cdk-hnb659fds-assets-...`: CDK用)あるが、いずれもtfstate管理用途ではなく、DynamoDBテーブルも0件だったため、既存のtfstate管理基盤は存在しない。本移行で以下を新規作成する(実施済み・Task 1完了)。
   - `aws_s3_bucket`(tfstate保存用。例: `trainingmemo-terraform-state`、バージョニング有効・パブリックアクセスブロック有効)
   - `aws_dynamodb_table`(ロック用。例: `trainingmemo-terraform-lock`、PAY_PER_REQUESTでオンデマンド課金・容量プランニング不要。追加コストは月$1未満)
   - これらはTerraform管理外で先に一度だけ手動 or ブートストラップ用スクリプトで作成する(backend自身の状態は循環参照になるため)。
 - [x] ~~VPCのサブネット構成・NAT Gateway有無~~ → 確認済み(0章参照)。NAT Gatewayなし、NAT Instanceで対応
 - [x] ~~本番ドメイン名・Route53 Hosted Zone ID~~ → `training-memo.com` / `Z05596822Q5INOY9TDTX0`
 - [x] ~~既存ACM証明書のARN~~ → `arn:aws:acm:ap-northeast-1:533267300159:certificate/555de339-4fdb-482c-a37f-70645e4a29f3`
+
+### 参考情報: 既存ACM証明書(ALB用)
+
+このACM証明書はALB用の既存証明書で、Terraformのdata参照や作成対象ではなく、ドキュメント目的で保持している(将来ALBを廃止する際の参照用)。
+
+- ARN: `arn:aws:acm:ap-northeast-1:533267300159:certificate/555de339-4fdb-482c-a37f-70645e4a29f3`
+- リージョン: `ap-northeast-1`
+
+※ この情報はもともと `infra/terraform/variables.tf`(親ディレクトリの孤立ファイル、削除済み)の `acm_certificate_arn_ap_northeast_1` 変数のコメントとして保持されていたが、当該ファイルの削除に伴いここに退避した。
 
 ## 10. 早期に実施できるコスト削減(移行を待たずに実施可能)
 

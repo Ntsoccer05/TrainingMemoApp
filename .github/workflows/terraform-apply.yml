@@ -1,0 +1,49 @@
+# 事前準備: このワークフローを動かす前に、GitHubリポジトリの Settings > Secrets and variables > Actions で
+# シークレット `AWS_GITHUB_ACTIONS_ROLE_ARN` を登録しておくこと。
+# 値: arn:aws:iam::533267300159:role/trainingmemo-github-actions-deploy
+# (infra/bootstrap/ で terraform apply 済みのOIDC用IAMロール)
+#
+# また、`environment: production` に対応する Environment を GitHub リポジトリ側(Settings > Environments)で
+# Required reviewers を設定済み(リポジトリをPublicにしたことで利用可能になった)。
+# mainマージ時に自動でplanまで進むが、Reviewerが承認するまでapplyは実行されない。
+
+name: Terraform Apply
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/terraform/**'
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: terraform-apply-production
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        working-directory: infra/terraform/envs/production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ap-northeast-1
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+
+      - run: terraform init
+
+      - run: terraform plan -out=tfplan
+
+      - run: terraform apply tfplan

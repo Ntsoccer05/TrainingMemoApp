@@ -3,3 +3,12 @@ phpmyadmin/sessions/
 .claude/settings.json
 .claude/settings.local.json
 docker/app/log/xdebug.log
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!**/terraform.tfvars
+crash.log
+crash.*.log

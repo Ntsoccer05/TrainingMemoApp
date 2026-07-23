@@ -1,0 +1,53 @@
+# 事前準備: このワークフローを動かす前に、GitHubリポジトリの Settings > Secrets and variables > Actions で
+# シークレット `AWS_GITHUB_ACTIONS_ROLE_ARN` を登録しておくこと。
+# 値: arn:aws:iam::533267300159:role/trainingmemo-github-actions-deploy
+# (infra/bootstrap/ で terraform apply 済みのOIDC用IAMロール)
+
+name: Terraform Plan
+
+on:
+  pull_request:
+    paths:
+      - 'infra/terraform/**'
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/terraform/envs/production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ap-northeast-1
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+
+      - run: terraform init
+
+      - run: terraform plan -no-color -out=tfplan.binary
+        id: plan
+
+      - name: Post plan to PR
+        uses: actions/github-script@v7
+        env:
+          PLAN: ${{ steps.plan.outputs.stdout }}
+        with:
+          script: |
+            const output = `#### Terraform Plan\n\`\`\`\n${process.env.PLAN}\n\`\`\``;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output,
+            });

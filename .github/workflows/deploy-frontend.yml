@@ -1,0 +1,55 @@
+# 事前準備: このワークフローを動かす前に、GitHubリポジトリの Settings > Secrets and variables > Actions で
+# シークレット `AWS_GITHUB_ACTIONS_ROLE_ARN` を登録しておくこと。
+# 値: arn:aws:iam::533267300159:role/trainingmemo-github-actions-deploy
+# (infra/bootstrap/ で terraform apply 済みのOIDC用IAMロール)
+#
+# S3バケット名 `trainingmemo-spa-frontend` は
+# infra/terraform/modules/frontend/main.tf の `${var.project_name}-spa-frontend`
+# (project_name=trainingmemo, infra/terraform/envs/production/variables.tf のデフォルト値) と一致させていること。
+
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/resources/js/**'
+      - 'src/package.json'
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-frontend-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ap-northeast-1
+
+      - run: aws s3 sync dist/ s3://trainingmemo-spa-frontend --delete
+
+      - run: |
+          DISTRIBUTION_ID=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Aliases.Items[?contains(@, 'training-memo.com')]].Id" \
+            --output text)
+          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
