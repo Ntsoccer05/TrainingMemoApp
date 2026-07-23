@@ -128,7 +128,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, ComputedRef } from "vue";
+import { ref, onMounted, computed, watch, ComputedRef } from "vue";
 import {
   useRoute,
   useRouter,
@@ -142,7 +142,6 @@ import useGetLoginUser from "../../composables/certification/useGetLoginUser";
 import useGetSecondRecordContent from "../../composables/record/useGetSecondRecordContent.js";
 import RecordTable from "./RecordTable.vue";
 import HistoryRecordContents from "./HistoryRecordContents.vue";
-import useGetTgtRecordContent from "../../composables/record/useGetTgtRecordContent.js";
 import useGetHistoryRecordContent from "../../composables/record/useGetHistoryRecordContent.js";
 import axios from "axios";
 import userSessionStorage from "../../utils/userSessionStorage";
@@ -166,6 +165,8 @@ const {
   getHistoryRecordSession,
   setHistoryRecordSession,
   removeHistoryRecordSession,
+  getComplementContentsSession,
+  setComplementContentsSession,
 } = menuContentSessionStorage(category_id, menu_id, record_state_id);
 const fillBeforeRecordSession = getFillBeforeRecordSession();
 
@@ -196,17 +197,19 @@ const menuContent = ref<string>("");
 const dispModal: ComputedRef<boolean> = computed(() => store.getters.dispAlertModal);
 const dispAlertModal = ref<boolean>(false);
 
-// 自動補完するか
-const complementContents = ref<boolean>(false);
+// 自動補完するか(部位+種目単位でsessionStorageに保存された値を初期値として復元する)
+const complementContents = ref<boolean>(getComplementContentsSession());
+
+// チェックボックスの状態が変わるたびに部位+種目単位で保存する
+watch(complementContents, (value) => {
+  setComplementContentsSession(value);
+});
 
 //前回データが存在するか？
 const isBeforeData = ref<boolean>(!!fillBeforeRecordSession);
 
 // 最新のレコード状態を取得
 const { getLatestRecordState, latestRecord } = useGetRecordState();
-
-//今回記録するデータの値を取得
-const { hasTgtRecord, getTgtRecords } = useGetTgtRecordContent();
 
 const { getLoginUser, loginUser } = useGetLoginUser();
 const { getSessionLoginUser } = userSessionStorage();
@@ -390,7 +393,6 @@ onMounted(async () => {
   }
   await getLatestRecordState();
   await getMenuContent();
-  await getTgtRecords(loginUser.value.id, category_id, menu_id, record_state_id);
   BeforeBtnTxt.value = "前回の記録を埋める";
   BeforeWeightTxt.value = "前回の体重";
   BeforeTotalSetTxt.value = "前回の合計セット数";

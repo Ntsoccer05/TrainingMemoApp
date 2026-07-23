@@ -8,6 +8,8 @@ export default function userSessionStorage(
     const menuContentKey = `menuContent_${categoryId}_${menuId}`;
     const fillBeforeRecordKey = `secondRecord_${categoryId}_${menuId}_${recordStateId}`;
     const historyRecordsKey = `historyRecords_${categoryId}_${menuId}_${recordStateId}`;
+    // 日付(recordStateId)を問わず、部位+種目単位で保持する
+    const complementContentsKey = `complementContents_${categoryId}_${menuId}`;
 
     const setMenuContentSession = (menuContent) =>
         sessionStorage.setItem(menuContentKey, JSON.stringify(menuContent));
@@ -40,6 +42,12 @@ export default function userSessionStorage(
     const removeHistoryRecordSession = () =>
         sessionStorage.removeItem(historyRecordsKey);
 
+    // 「重量・回数を補完する」チェックボックスの状態を部位+種目単位で保持する
+    const getComplementContentsSession = (): boolean =>
+        sessionStorage.getItem(complementContentsKey) === "true";
+    const setComplementContentsSession = (value: boolean) =>
+        sessionStorage.setItem(complementContentsKey, String(value));
+
     return {
         setMenuContentSession,
         getMenuContentSession,
@@ -50,5 +58,7 @@ export default function userSessionStorage(
         getHistoryRecordSession,
         setHistoryRecordSession,
         removeHistoryRecordSession,
+        getComplementContentsSession,
+        setComplementContentsSession,
     };
 }

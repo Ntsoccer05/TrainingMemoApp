@@ -187,7 +187,18 @@
           </div>
         </td>
         <td>
-          <div class="bg-gray-200 border indent-1">{{ index + 1 }}セット目</div>
+          <div class="bg-gray-200 border indent-1 flex items-center justify-between">
+            <span>{{ index + 1 }}セット目</span>
+            <button
+              v-if="contents[index].set"
+              type="button"
+              class="mr-1 text-blue-700 hover:text-blue-900"
+              title="今回にコピー"
+              @click="copySetFromBefore(index)"
+            >
+              <i class="fa-solid fa-copy"></i>
+            </button>
+          </div>
           <!-- 前回のセットがある場合 -->
           <!-- <template v-if="contents[index].set"> -->
           <div :class="hasOneHand ? 'hidden' : 'block'">
@@ -320,7 +331,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, ComputedRef } from "vue";
+import { ref, onMounted, computed, watch, ComputedRef, nextTick } from "vue";
 import { onBeforeRouteLeave, useRoute } from "vue-router";
 import useGetLoginUser from "../../composables/certification/useGetLoginUser";
 import useGetTgtRecordContent from "../../composables/record/useGetTgtRecordContent.js";
@@ -662,10 +673,57 @@ const adjustHeight = (
 };
 
 const inputBeforeMemo = (index) => {
-  if (!beforeMemo.value) return;
-  beforeMemo.value[index].value = contents.value[index].memo;
+  if (!beforeMemo.value) return contents.value[index].memo;
+  const newValue = contents.value[index].memo;
+  // :valueバインディングはこの関数を全行分、再レンダリングのたびに呼び出す
+  // (どこか1行に入力するだけで他の9行分も再実行される)ため、
+  // 実際に値が変わっていない行ではDOM書き込み・強制レイアウト(adjustHeight)を行わないようにする
+  if (beforeMemo.value[index].value === (newValue ?? "")) {
+    return newValue;
+  }
+  beforeMemo.value[index].value = newValue;
   adjustHeight(beforeMemo.value[index], thisMemo.value[index]);
-  return contents.value[index].memo;
+  return newValue;
+};
+
+// 前回のそのセットの重量・回数・メモを今回欄へ常に上書きコピーする
+const copySetFromBefore = (index: number) => {
+  const before = contents.value[index];
+  if (hasOneHand.value) {
+    rightWeight.value[index] =
+      before.right_weight !== null && before.right_weight !== undefined
+        ? before.right_weight.toString()
+        : "";
+    rightRep.value[index] =
+      before.right_rep !== null && before.right_rep !== undefined
+        ? before.right_rep.toString()
+        : "";
+    leftWeight.value[index] =
+      before.left_weight !== null && before.left_weight !== undefined
+        ? before.left_weight.toString()
+        : "";
+    leftRep.value[index] =
+      before.left_rep !== null && before.left_rep !== undefined
+        ? before.left_rep.toString()
+        : "";
+  } else {
+    weight.value[index] =
+      before.weight !== null && before.weight !== undefined
+        ? before.weight.toString()
+        : "";
+    rep.value[index] =
+      before.rep !== null && before.rep !== undefined ? before.rep.toString() : "";
+  }
+  memo.value[index] = before.memo !== null && before.memo !== undefined ? before.memo : "";
+
+  // v-modelの反映(DOM更新)を待ってから、今回のメモ欄の高さを前回欄に合わせて調整する
+  nextTick(() => {
+    if (thisMemo.value && thisMemo.value[index] && beforeMemo.value && beforeMemo.value[index]) {
+      adjustHeight(thisMemo.value[index], beforeMemo.value[index]);
+    }
+  });
+
+  postRecordContent(index);
 };
 
 onMounted(async () => {
