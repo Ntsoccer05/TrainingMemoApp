@@ -1,4 +1,4 @@
-FROM php:8.1.9-fpm
+FROM php:8.2-fpm
 
 # vite用のポート番号
 EXPOSE 5173
