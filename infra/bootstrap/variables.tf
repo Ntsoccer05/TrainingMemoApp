@@ -7,7 +7,7 @@ variable "project_name" {
 variable "github_repository" {
   description = "GitHub OIDCで信頼するリポジトリ(owner/repo形式)"
   type        = string
-  default     = "Ntsoccer05/trainingMemo"
+  default     = "Ntsoccer05/TrainingMemoApp"
 }
 
 variable "local_operator_iam_user_name" {
