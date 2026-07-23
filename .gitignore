@@ -1,2 +1,5 @@
 .env
 phpmyadmin/sessions/
+.claude/settings.json
+.claude/settings.local.json
+docker/app/log/xdebug.log

@@ -5,7 +5,6 @@
 import { useRouter, useRoute } from "vue-router";
 import { useStore } from "vuex";
 import useGetLoginUser from "../../composables/certification/useGetLoginUser";
-import useSelectedDay from "../../composables/record/useSelectedDay";
 import useGetRecords from "../../composables/record/useGetRecords";
 import { DispRecords } from "../../types/record";
 import axios from "axios";
@@ -208,21 +207,25 @@ const menuScroll = (calendarDom) => {
   }
 };
 
-// year/monthからその月の月初・月末の"YYYY-MM-DD"文字列を計算する
-const monthRange = (year: number, month: number): { from: string; to: string } => {
-  const from = `${year}-${pad2(month)}-01`;
+// 対象月とその2ヶ月前までの3ヶ月分("YYYY-MM-DD")の範囲を計算する
+// (対象月の月末を終端とし、そこから3ヶ月分さかのぼった月初を開始日とする)
+const threeMonthRangeEndingAt = (year: number, month: number): { from: string; to: string } => {
+  const startDate = new Date(year, month - 1 - 2, 1);
+  const from = `${startDate.getFullYear()}-${pad2(startDate.getMonth() + 1)}-01`;
   const lastDay = new Date(year, month, 0).getDate();
   const to = `${year}-${pad2(month)}-${pad2(lastDay)}`;
   return { from, to };
 };
 
-// v-calendarの月移動を検知し、未取得の月であれば追加取得する
+// v-calendarの月移動を検知し、未取得の月であれば3ヶ月分まとめて追加取得する
+// (1ヶ月ずつ取得すると月を遡るたびにAPIリクエストが発生し通信回数が増えるため、
+//  直近3ヶ月ずつまとめて取得することでリクエスト回数を抑える)
 const onPageChange = async (page: { month: number; year: number }) => {
   const key = monthKey(page.year, page.month);
   if (fetchedMonths.has(key)) {
     return;
   }
-  const { from, to } = monthRange(page.year, page.month);
+  const { from, to } = threeMonthRangeEndingAt(page.year, page.month);
   // getRecords()は内部でエラーをcatchして握りつぶすため例外は投げられない。
   // 成功時は必ずrecords.valueがres.data.recordsという新しい配列参照に置き換わる一方、
   // 失敗時(.catch内)はrecords.valueに一切触れないため参照は変化しない。
@@ -230,7 +233,11 @@ const onPageChange = async (page: { month: number; year: number }) => {
   const beforeRecords = records.value;
   await getRecords(loginUser.value.id || 0, "", from, to);
   if (records.value !== beforeRecords) {
-    fetchedMonths.add(key);
+    // 取得した3ヶ月分(対象月とその2ヶ月前まで)をまとめて取得済みとして記録する
+    for (let i = 0; i <= 2; i++) {
+      const d = new Date(page.year, page.month - 1 - i, 1);
+      fetchedMonths.add(monthKey(d.getFullYear(), d.getMonth() + 1));
+    }
   }
 };
 
@@ -292,6 +299,8 @@ const selectedDayRecord = async (day) => {
     })
     .then((res) => {
       store.commit("setRecordedAt", day);
+      // 新規レコードが作成され最新レコードが変わったため、getLatestRecordStateのキャッシュを無効化する
+      store.commit("invalidateLatestRecordState");
       router.push({ name: "selectMenu", params: { recordId: day } });
     })
     .catch((err) => {});
@@ -320,11 +329,10 @@ const selectedDay = (day) => {
     if (isRecord.value === true) {
       return;
     }
-    const { postDay } = useSelectedDay(day);
     if (!isSendData.value) {
       isSendData.value = true;
       // 日付クリック時にPOST送信する
-      selectedDayRecord(postDay);
+      selectedDayRecord(selected_day.value);
     }
   }
 };
@@ -349,14 +357,27 @@ const toDetailPage = async (day) => {
     // 年-月-日の形に修正
     day = day.ariaLabel.split("日");
     day = day[0].replace(/年|月/g, "-");
-    const { postDay } = useSelectedDay(day);
+    const formattedDay = changeDayFormat(day);
+    // このポップオーバー(詳細へボタン)はrecordEvents(既存記録がある日)にのみ表示されるため、
+    // 遷移先の日は基本的に常に記録済みだが、念のためallRecordsで確認し、
+    // 既に記録済みならrecord/createを呼ばず直接遷移する(不要なAPI呼び出しとupdated_atの更新を避ける)
+    const isRecorded = allRecords.value.some(
+      (record) => record.recorded_at.recorded_at === formattedDay
+    );
+    if (isRecorded) {
+      store.commit("setRecordedAt", day);
+      router.push({ name: "selectMenu", params: { recordId: day } });
+      return;
+    }
     await axios
       .post("/api/record/create", {
         user_id: loginUser.value.id,
-        recording_day: postDay,
+        recording_day: formattedDay,
       })
       .then((res) => {
         store.commit("setRecordedAt", day);
+        // 新規レコードが作成され最新レコードが変わったため、getLatestRecordStateのキャッシュを無効化する
+        store.commit("invalidateLatestRecordState");
         router.push({ name: "selectMenu", params: { recordId: day } });
       });
   }

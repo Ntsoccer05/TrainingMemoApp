@@ -89,6 +89,8 @@ const record = async () => {
       })
       .then((res) => {
         store.commit("setRecordedAt", postDay);
+        // 新規レコードが作成され最新レコードが変わったため、getLatestRecordStateのキャッシュを無効化する
+        store.commit("invalidateLatestRecordState");
         router.push({
           name: "selectMenu",
           params: { recordId: postDay },

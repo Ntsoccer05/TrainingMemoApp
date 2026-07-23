@@ -98,6 +98,7 @@ import useGetRecords from "../../composables/record/useGetRecords";
 import axios from "axios";
 import userSessionStorage from "../../utils/userSessionStorage";
 import session from "../../utils/sessionStorageUtil";
+import fetchMenusOnce from "../../utils/menusRequestDedup";
 
 const router = useRouter();
 const route = useRoute();
@@ -217,13 +218,7 @@ const getMenus = async () => {
     handleMenus(cache);
     return;
   }
-  await axios
-    .get("/api/menus", {
-      // get時にパラメータを渡す際はparamsで指定が必要
-      params: {
-        user_id: loginUser.value.id,
-      },
-    })
+  await fetchMenusOnce(loginUser.value.id)
     .then((res) => {
       //編集画面でなければ
       if (!editable.value) {
@@ -267,7 +262,10 @@ const postWeight = async () => {
       recording_day: latestRecord.value.recorded_at,
       weight: weight.value,
     })
-    .then((res) => {})
+    .then((res) => {
+      // bodyWeight/updated_atが変わり、キャッシュされたlatestRecordが古くなるため無効化する
+      store.commit("invalidateLatestRecordState");
+    })
     .catch((err) => {});
 };
 
@@ -373,6 +371,8 @@ const deleteMenu = async (next: NavigationGuardNext) => {
     })
     .then((res) => {
       store.commit("compGetData", false);
+      // レコードが削除され最新レコードが変わりうるため、キャッシュを無効化する
+      store.commit("invalidateLatestRecordState");
       next();
     })
     .catch(() => {});

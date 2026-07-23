@@ -133,6 +133,7 @@ import { DispRecords, Categories, Category, Menu } from "../../types/record";
 import axios from "axios";
 import userSessionStorage from "../../utils/userSessionStorage";
 import session from "../../utils/sessionStorageUtil";
+import fetchMenusOnce from "../../utils/menusRequestDedup";
 
 const props = defineProps<{
   editable: boolean;
@@ -205,13 +206,7 @@ const getMenus = async () => {
     isOdd.value = categories.value.length % 2 === 1;
     return;
   }
-  await axios
-    .get("/api/menus", {
-      // get時にパラメータを渡す際はparamsで指定が必要
-      params: {
-        user_id: loginUser.value.id,
-      },
-    })
+  await fetchMenusOnce(loginUser.value.id)
     .then((res) => {
       categories.value = res.data.categorylist;
       session.set("trainingMenus", res.data);
