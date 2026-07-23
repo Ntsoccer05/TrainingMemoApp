@@ -116,7 +116,10 @@ resource "aws_lambda_function" "app" {
   depends_on = [aws_s3_object.placeholder]
 
   lifecycle {
-    ignore_changes = [s3_key] # CIがコード更新するため、Terraform側では追跡しない
+    ignore_changes = [
+      s3_key,      # CIがコード更新するため、Terraform側では追跡しない
+      environment, # DB_PASSWORD/APP_KEY等の機密値はCIがGitHub Secretsから設定するため、Terraform側では追跡しない
+    ]
   }
 }
 
@@ -148,7 +151,10 @@ resource "aws_lambda_function" "artisan" {
   }
 
   lifecycle {
-    ignore_changes = [s3_key]
+    ignore_changes = [
+      s3_key,      # CIがコード更新するため、Terraform側では追跡しない
+      environment, # DB_PASSWORD/APP_KEY等の機密値はCIがGitHub Secretsから設定するため、Terraform側では追跡しない
+    ]
   }
 
   depends_on = [aws_s3_object.placeholder]

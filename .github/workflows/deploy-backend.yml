@@ -1,7 +1,10 @@
 # 事前準備: このワークフローを動かす前に、GitHubリポジトリの Settings > Secrets and variables > Actions で
-# シークレット `AWS_GITHUB_ACTIONS_ROLE_ARN` を登録しておくこと。
-# 値: arn:aws:iam::533267300159:role/trainingmemo-github-actions-deploy
-# (infra/bootstrap/ で terraform apply 済みのOIDC用IAMロール)
+# 以下のシークレットを登録しておくこと。
+#   - AWS_GITHUB_ACTIONS_ROLE_ARN: arn:aws:iam::533267300159:role/trainingmemo-github-actions-deploy
+#     (infra/bootstrap/ で terraform apply 済みのOIDC用IAMロール)
+#   - DB_DATABASE: RDS(training-memo)上の実際のデータベース名
+#   - DB_PASSWORD: RDS(training-memo)のマスターパスワード
+#   - APP_KEY: 既存EC2の .env と同じ値(暗号化データ/セッションの互換性のため必ず同一にすること)
 #
 # S3バケット名 `trainingmemo-spa-frontend` / Lambda関数名 `trainingmemo-laravel-app` / `trainingmemo-laravel-artisan` は
 # infra/terraform/modules/backend_lambda/main.tf (aws_lambda_function.app / aws_lambda_function.artisan の function_name)
@@ -11,6 +14,10 @@
 # artisan コマンドの実行は HTTP リクエスト処理用の Lambda 関数(trainingmemo-laravel-app, handler = "public/index.php")
 # ではなく、コンソール実行専用の Lambda 関数(trainingmemo-laravel-artisan, handler = "artisan")に対して行う。
 # 両関数とも同じデプロイパッケージ(zip)を使うため、デプロイ時は両方の関数コードを更新する必要がある。
+#
+# DB_PASSWORD/APP_KEY等の機密値はTerraformでは管理せず(state内に平文で残るのを避けるため)、
+# このワークフローがGitHub Secretsから読み取り、都度 aws lambda update-function-configuration で設定する。
+# (infra/terraform/modules/backend_lambda/main.tf 側は lifecycle.ignore_changes で environment を追跡除外している)
 
 name: Deploy Backend
 
@@ -66,6 +73,40 @@ jobs:
             --s3-bucket trainingmemo-spa-frontend \
             --s3-key backend/${{ github.sha }}.zip
           aws lambda wait function-updated --function-name trainingmemo-laravel-artisan
+
+      - name: Configure Lambda environment variables
+        env:
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          APP_KEY: ${{ secrets.APP_KEY }}
+        run: |
+          jq -n \
+            --arg db_database "$DB_DATABASE" \
+            --arg db_password "$DB_PASSWORD" \
+            --arg app_key "$APP_KEY" \
+            '{Variables: {
+              APP_ENV: "production",
+              SESSION_DRIVER: "database",
+              CACHE_DRIVER: "database",
+              LOG_CHANNEL: "stderr",
+              DB_CONNECTION: "mysql",
+              DB_HOST: "training-memo.clc4qko0ggkz.ap-northeast-1.rds.amazonaws.com",
+              DB_PORT: "3306",
+              DB_DATABASE: $db_database,
+              DB_USERNAME: "training0512",
+              DB_PASSWORD: $db_password,
+              APP_KEY: $app_key
+            }}' > /tmp/lambda-env.json
+
+          aws lambda update-function-configuration \
+            --function-name trainingmemo-laravel-artisan \
+            --environment file:///tmp/lambda-env.json
+          aws lambda wait function-updated --function-name trainingmemo-laravel-artisan
+
+          aws lambda update-function-configuration \
+            --function-name trainingmemo-laravel-app \
+            --environment file:///tmp/lambda-env.json
+          aws lambda wait function-updated --function-name trainingmemo-laravel-app
 
       - name: Run migrations
         run: |
