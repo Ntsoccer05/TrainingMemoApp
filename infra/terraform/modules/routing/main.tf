@@ -86,7 +86,7 @@ resource "aws_cloudfront_distribution" "main" {
 
     forwarded_values {
       query_string = true
-      headers      = ["Authorization", "Accept", "Content-Type"]
+      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin"]
       cookies {
         forward = "all"
       }
@@ -105,7 +105,7 @@ resource "aws_cloudfront_distribution" "main" {
 
     forwarded_values {
       query_string = true
-      headers      = ["Authorization", "Accept", "Content-Type"]
+      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin"]
       cookies {
         forward = "all"
       }
@@ -124,7 +124,7 @@ resource "aws_cloudfront_distribution" "main" {
 
     forwarded_values {
       query_string = true
-      headers      = ["Authorization", "Accept", "Content-Type"]
+      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin"]
       cookies {
         forward = "all"
       }
@@ -143,7 +143,7 @@ resource "aws_cloudfront_distribution" "main" {
 
     forwarded_values {
       query_string = true
-      headers      = ["Authorization", "Accept", "Content-Type"]
+      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin"]
       cookies {
         forward = "all"
       }
