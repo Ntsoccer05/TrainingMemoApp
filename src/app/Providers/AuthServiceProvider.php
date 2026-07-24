@@ -27,15 +27,12 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        error_log('[DEBUG-BOOT] AuthServiceProvider boot start');
         $this->registerPolicies();
-        error_log('[DEBUG-BOOT] AuthServiceProvider boot after registerPolicies');
 
         //
         ResetPassword::createUrlUsing(function (User $user, string $token) {
             // メールのパスワードリセットボタン押下時の遷移先
             return env('APP_URL').'/password/reset?token121212121='.$token.'1212121212&email='.$user->email;
         });
-        error_log('[DEBUG-BOOT] AuthServiceProvider boot end');
     }
 }

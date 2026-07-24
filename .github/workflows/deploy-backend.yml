@@ -80,6 +80,11 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           APP_KEY: ${{ secrets.APP_KEY }}
         run: |
+          # RUNTIME_CLASSを明示しないと、Brefのレイヤー(bootstrap)は
+          # デフォルトで Bref\FunctionRuntime\Main を使ってしまう。
+          # これはハンドラーファイルをそのままrequireして「返り値」を期待する汎用ランタイムのため、
+          # console用のartisan(exit()で終了する素のCLIスクリプト)やHTTP用のpublic/index.phpとは相性が悪く、
+          # 期待した ConsoleRuntime / FpmRuntime が使われず、ハングやクラッシュの原因になっていた。
           jq -n \
             --arg db_database "$DB_DATABASE" \
             --arg db_password "$DB_PASSWORD" \
@@ -95,17 +100,37 @@ jobs:
               DB_DATABASE: $db_database,
               DB_USERNAME: "training0512",
               DB_PASSWORD: $db_password,
-              APP_KEY: $app_key
-            }}' > /tmp/lambda-env.json
+              APP_KEY: $app_key,
+              RUNTIME_CLASS: "Bref\\ConsoleRuntime\\Main"
+            }}' > /tmp/lambda-env-artisan.json
+
+          jq -n \
+            --arg db_database "$DB_DATABASE" \
+            --arg db_password "$DB_PASSWORD" \
+            --arg app_key "$APP_KEY" \
+            '{Variables: {
+              APP_ENV: "production",
+              SESSION_DRIVER: "database",
+              CACHE_DRIVER: "database",
+              LOG_CHANNEL: "stderr",
+              DB_CONNECTION: "mysql",
+              DB_HOST: "training-memo.clc4qko0ggkz.ap-northeast-1.rds.amazonaws.com",
+              DB_PORT: "3306",
+              DB_DATABASE: $db_database,
+              DB_USERNAME: "training0512",
+              DB_PASSWORD: $db_password,
+              APP_KEY: $app_key,
+              RUNTIME_CLASS: "Bref\\FpmRuntime\\Main"
+            }}' > /tmp/lambda-env-app.json
 
           aws lambda update-function-configuration \
             --function-name trainingmemo-laravel-artisan \
-            --environment file:///tmp/lambda-env.json
+            --environment file:///tmp/lambda-env-artisan.json
           aws lambda wait function-updated --function-name trainingmemo-laravel-artisan
 
           aws lambda update-function-configuration \
             --function-name trainingmemo-laravel-app \
-            --environment file:///tmp/lambda-env.json
+            --environment file:///tmp/lambda-env-app.json
           aws lambda wait function-updated --function-name trainingmemo-laravel-app
 
       - name: Run migrations
