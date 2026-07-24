@@ -17,6 +17,15 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         error_log('[DEBUG-BOOT] AppServiceProvider register');
+        $this->app->booted(function () {
+            error_log('[DEBUG-BOOT] ALL PROVIDERS BOOTED (app booted callback)');
+        });
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Console\Events\CommandStarting::class, function ($event) {
+            error_log('[DEBUG-BOOT] CommandStarting: ' . $event->command);
+        });
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Console\Events\CommandFinished::class, function ($event) {
+            error_log('[DEBUG-BOOT] CommandFinished: ' . $event->command . ' exitCode=' . $event->exitCode);
+        });
     }
 
     /**
