@@ -15,6 +15,14 @@ resource "aws_security_group" "lambda" {
   }
 
   egress {
+    description = "SMTP submission (STARTTLS) to Gmail for Inquiry mail"
+    from_port   = 587
+    to_port     = 587
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
     description     = "MySQL to RDS"
     from_port       = 3306
     to_port         = 3306
