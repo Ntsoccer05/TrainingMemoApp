@@ -16,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        error_log('[DEBUG-BOOT] AppServiceProvider register');
     }
 
     /**
@@ -26,7 +26,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        error_log('[DEBUG-BOOT] AppServiceProvider boot start');
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+        error_log('[DEBUG-BOOT] AppServiceProvider boot end');
     }
 }

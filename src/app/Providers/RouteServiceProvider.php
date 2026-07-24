@@ -26,16 +26,22 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        error_log('[DEBUG-BOOT] RouteServiceProvider boot start');
         $this->configureRateLimiting();
+        error_log('[DEBUG-BOOT] RouteServiceProvider after configureRateLimiting');
 
         $this->routes(function () {
+            error_log('[DEBUG-BOOT] RouteServiceProvider routes closure start');
             Route::middleware('api')
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));
+            error_log('[DEBUG-BOOT] RouteServiceProvider after api.php');
 
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
+            error_log('[DEBUG-BOOT] RouteServiceProvider after web.php');
         });
+        error_log('[DEBUG-BOOT] RouteServiceProvider boot end');
     }
 
     /**

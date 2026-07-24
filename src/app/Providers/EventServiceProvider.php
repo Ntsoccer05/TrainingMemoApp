@@ -27,7 +27,7 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        error_log('[DEBUG-BOOT] EventServiceProvider boot');
     }
 
     /**
