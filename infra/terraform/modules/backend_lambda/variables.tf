@@ -6,6 +6,11 @@ variable "vpc_id" {
   type = string
 }
 
+variable "vpc_cidr_block" {
+  description = "LambdaのSGからVPC内DNSリゾルバへのegressを許可するためのVPC CIDR"
+  type        = string
+}
+
 variable "private_subnet_ids" {
   type = list(string)
 }

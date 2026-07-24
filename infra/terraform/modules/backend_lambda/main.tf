@@ -21,6 +21,26 @@ resource "aws_security_group" "lambda" {
     protocol        = "tcp"
     security_groups = [var.db_security_group_id]
   }
+
+  # 明示的にegressルールを指定すると暗黙のフルアレグレスが無効化され、
+  # VPC内DNSリゾルバ(UDP/TCP 53)への通信も遮断されてしまう。
+  # これによりホスト名解決が必要な処理(DB接続含む)がすべてハングし、
+  # Lambdaのタイムアウトまで応答が返らない不具合が発生していたため追加する。
+  egress {
+    description = "DNS resolution to VPC resolver"
+    from_port    = 53
+    to_port      = 53
+    protocol     = "udp"
+    cidr_blocks  = [var.vpc_cidr_block]
+  }
+
+  egress {
+    description = "DNS resolution to VPC resolver (TCP fallback)"
+    from_port    = 53
+    to_port      = 53
+    protocol     = "tcp"
+    cidr_blocks  = [var.vpc_cidr_block]
+  }
 }
 
 resource "aws_security_group_rule" "db_allow_lambda" {

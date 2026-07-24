@@ -10,6 +10,12 @@ variable "vpc_id" {
   default     = "vpc-04b784aabe610a416"
 }
 
+variable "vpc_cidr_block" {
+  description = "既存VPCのCIDRブロック(LambdaのSGからVPC内DNSリゾルバへのegress許可に使用)"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
 variable "public_subnet_ids" {
   description = "既存publicサブネット(1a, 1c)"
   type        = list(string)

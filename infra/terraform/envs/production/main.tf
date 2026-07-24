@@ -17,6 +17,7 @@ module "backend_lambda" {
 
   project_name         = var.project_name
   vpc_id               = var.vpc_id
+  vpc_cidr_block       = var.vpc_cidr_block
   private_subnet_ids   = var.private_subnet_ids
   db_security_group_id = var.db_security_group_id
   deploy_bucket        = module.frontend_bucket.bucket_id
