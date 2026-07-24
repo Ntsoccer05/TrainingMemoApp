@@ -162,6 +162,24 @@ resource "aws_cloudfront_distribution" "main" {
     response_page_path = "/index.html"
   }
 
+  # 500系はCloudFrontのデフォルト挙動だとエラーレスポンスをキャッシュしてしまう可能性があるため、
+  # API系のエラーレスポンスはキャッシュしないよう明示する。
+  # (401はCloudFrontのcustom_error_responseがサポートする有効なエラーコードに含まれないため対象外)
+  custom_error_response {
+    error_code            = 500
+    error_caching_min_ttl = 0
+  }
+
+  custom_error_response {
+    error_code            = 502
+    error_caching_min_ttl = 0
+  }
+
+  custom_error_response {
+    error_code            = 503
+    error_caching_min_ttl = 0
+  }
+
   restrictions {
     geo_restriction {
       restriction_type = "none"
