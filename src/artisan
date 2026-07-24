@@ -18,6 +18,13 @@ define('LARAVEL_START', microtime(true));
 error_log('[DEBUG-BOOT] before autoload');
 error_log('[DEBUG-BOOT] argv=' . json_encode($argv ?? null));
 error_log('[DEBUG-BOOT] SERVER_argv=' . json_encode($_SERVER['argv'] ?? null));
+error_log('[DEBUG-BOOT] backtrace=' . json_encode(array_map(fn($f) => ($f['file'] ?? '?') . ':' . ($f['line'] ?? '?'), debug_backtrace())));
+error_log('[DEBUG-BOOT] included_files_count=' . count(get_included_files()));
+error_log('[DEBUG-BOOT] LAMBDA_env=' . json_encode([
+    'AWS_LAMBDA_FUNCTION_NAME' => getenv('AWS_LAMBDA_FUNCTION_NAME'),
+    '_HANDLER' => getenv('_HANDLER'),
+    'LAMBDA_TASK_ROOT' => getenv('LAMBDA_TASK_ROOT'),
+]));
 require __DIR__.'/vendor/autoload.php';
 error_log('[DEBUG-BOOT] after autoload');
 
