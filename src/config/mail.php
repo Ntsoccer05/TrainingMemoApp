@@ -43,6 +43,9 @@ return [
             'password' => env('MAIL_PASSWORD'),
             'timeout' => null,
             'local_domain' => env('MAIL_EHLO_DOMAIN'),
+            // VPCにIPv6ルートが無いため、AAAAレコード経由のIPv6接続試行が
+            // "Cannot assign requested address" で失敗する。IPv4での送信元バインドを強制する。
+            'source_ip' => '0.0.0.0',
         ],
 
         'ses' => [
