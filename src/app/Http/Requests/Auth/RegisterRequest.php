@@ -27,7 +27,9 @@ class RegisterRequest extends FormRequest
     {
         return [
             'name' => 'nullable|unique:users|string',
-            'email' => 'required|unique:users|email:strict,dns,spoof',
+            // spoof(なりすまし文字)チェックはPHPのintl拡張が必要だが、
+            // BrefのLambdaランタイムにはintl拡張が含まれていないため使用不可。
+            'email' => 'required|unique:users|email:strict,dns',
             'password' => 'nullable|string' 
         ];
     }

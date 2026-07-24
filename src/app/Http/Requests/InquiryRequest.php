@@ -27,7 +27,9 @@ class InquiryRequest extends FormRequest
     {
         return [
             'name' => 'nullable',
-            'email' => 'required|email:strict,dns,spoof',
+            // spoof(なりすまし文字)チェックはPHPのintl拡張が必要だが、
+            // BrefのLambdaランタイムにはintl拡張が含まれていないため使用不可。
+            'email' => 'required|email:strict,dns',
             'content' => 'required',
         ];
     }
