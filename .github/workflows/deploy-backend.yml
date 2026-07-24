@@ -5,6 +5,8 @@
 #   - DB_DATABASE: RDS(training-memo)上の実際のデータベース名
 #   - DB_PASSWORD: RDS(training-memo)のマスターパスワード
 #   - APP_KEY: 既存EC2の .env と同じ値(暗号化データ/セッションの互換性のため必ず同一にすること)
+#   - MAIL_PASSWORD: Gmail(trainingMemoApp@gmail.com)のアプリパスワード(お問い合わせ/パスワードリセットメール送信用)
+#   - GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET: Google OAuthログイン用のクライアント情報
 #
 # S3バケット名 `trainingmemo-spa-frontend` / Lambda関数名 `trainingmemo-laravel-app` / `trainingmemo-laravel-artisan` は
 # infra/terraform/modules/backend_lambda/main.tf (aws_lambda_function.app / aws_lambda_function.artisan の function_name)
@@ -79,6 +81,9 @@ jobs:
           DB_DATABASE: ${{ secrets.DB_DATABASE }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           APP_KEY: ${{ secrets.APP_KEY }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
           # RUNTIME_CLASSを明示しないと、Brefのレイヤー(bootstrap)は
           # デフォルトで Bref\FunctionRuntime\Main を使ってしまう。
@@ -89,6 +94,9 @@ jobs:
             --arg db_database "$DB_DATABASE" \
             --arg db_password "$DB_PASSWORD" \
             --arg app_key "$APP_KEY" \
+            --arg mail_password "$MAIL_PASSWORD" \
+            --arg google_client_id "$GOOGLE_CLIENT_ID" \
+            --arg google_client_secret "$GOOGLE_CLIENT_SECRET" \
             '{Variables: {
               APP_ENV: "production",
               APP_URL: "https://training-memo.com",
@@ -104,6 +112,15 @@ jobs:
               DB_USERNAME: "training0512",
               DB_PASSWORD: $db_password,
               APP_KEY: $app_key,
+              MAIL_MAILER: "smtp",
+              MAIL_HOST: "smtp.gmail.com",
+              MAIL_PORT: "587",
+              MAIL_USERNAME: "trainingMemoApp@gmail.com",
+              MAIL_PASSWORD: $mail_password,
+              MAIL_FROM_ADDRESS: "trainingMemoApp@gmail.com",
+              MAIL_FROM_NAME: "trainingMemo",
+              GOOGLE_CLIENT_ID: $google_client_id,
+              GOOGLE_CLIENT_SECRET: $google_client_secret,
               RUNTIME_CLASS: "Bref\\ConsoleRuntime\\Main"
             }}' > /tmp/lambda-env-artisan.json
 
@@ -111,6 +128,9 @@ jobs:
             --arg db_database "$DB_DATABASE" \
             --arg db_password "$DB_PASSWORD" \
             --arg app_key "$APP_KEY" \
+            --arg mail_password "$MAIL_PASSWORD" \
+            --arg google_client_id "$GOOGLE_CLIENT_ID" \
+            --arg google_client_secret "$GOOGLE_CLIENT_SECRET" \
             '{Variables: {
               APP_ENV: "production",
               APP_URL: "https://training-memo.com",
@@ -126,6 +146,15 @@ jobs:
               DB_USERNAME: "training0512",
               DB_PASSWORD: $db_password,
               APP_KEY: $app_key,
+              MAIL_MAILER: "smtp",
+              MAIL_HOST: "smtp.gmail.com",
+              MAIL_PORT: "587",
+              MAIL_USERNAME: "trainingMemoApp@gmail.com",
+              MAIL_PASSWORD: $mail_password,
+              MAIL_FROM_ADDRESS: "trainingMemoApp@gmail.com",
+              MAIL_FROM_NAME: "trainingMemo",
+              GOOGLE_CLIENT_ID: $google_client_id,
+              GOOGLE_CLIENT_SECRET: $google_client_secret,
               RUNTIME_CLASS: "Bref\\FpmRuntime\\Main"
             }}' > /tmp/lambda-env-app.json
 
