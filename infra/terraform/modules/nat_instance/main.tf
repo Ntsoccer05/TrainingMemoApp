@@ -15,6 +15,37 @@ data "aws_ami" "al2023_arm" {
 }
 
 # --- 2/3: SG + Instance ---
+
+# 診断用: シェルアクセス手段(SSH/EC2 Instance Connect)が無く、コンソール出力だけでは
+# 実行時のiptables/conntrack状態を確認できないため、SSM Session Manager経由で
+# 一時的に内部状態を確認できるようにする。
+data "aws_iam_policy_document" "nat_assume_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    effect  = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "nat_ssm" {
+  name               = "${var.project_name}-nat-instance-ssm-role"
+  assume_role_policy = data.aws_iam_policy_document.nat_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "nat_ssm" {
+  role       = aws_iam_role.nat_ssm.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "nat_ssm" {
+  name = "${var.project_name}-nat-instance-ssm-profile"
+  role = aws_iam_role.nat_ssm.name
+}
+
 resource "aws_security_group" "nat" {
   name        = "${var.project_name}-nat-instance-sg"
   description = "NAT instance for private subnet outbound"
@@ -42,6 +73,7 @@ resource "aws_instance" "nat" {
   subnet_id              = var.public_subnet_id
   vpc_security_group_ids = [aws_security_group.nat.id]
   source_dest_check      = false
+  iam_instance_profile   = aws_iam_instance_profile.nat_ssm.name
 
   # user_dataはデフォルトでは変更してもインスタンスの再作成をトリガーせず、
   # 既存インスタンスは起動済みのため再度cloud-initが走らない(=修正が反映されない)。
