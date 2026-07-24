@@ -53,7 +53,10 @@ jobs:
           role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
           aws-region: ap-northeast-1
 
-      - run: aws s3 sync dist/ s3://trainingmemo-spa-frontend --delete
+      # --deleteはバケット全体を対象にするため、除外しないとDeploy Backendが
+      # backend/配下にアップロードしたデプロイzipまで削除してしまい、
+      # 同時実行時にDeploy Backend側の「S3からコード取得」が失敗する不具合があった。
+      - run: aws s3 sync dist/ s3://trainingmemo-spa-frontend --delete --exclude "backend/*"
 
       - run: |
           DISTRIBUTION_ID=$(aws cloudfront list-distributions \
