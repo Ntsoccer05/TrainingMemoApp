@@ -103,19 +103,30 @@ resource "aws_instance" "nat" {
     IFACE=$(ip route show default | awk '{print $5; exit}')
     echo "NAT_DEBUG detected IFACE=[$IFACE]"
     iptables -t nat -A POSTROUTING -o "$IFACE" -j MASQUERADE
+
+    # このAMIにはDockerが同梱されており、そのiptables統合がfilterテーブルの
+    # FORWARDチェーンのデフォルトポリシーをDROPに変更する(コンテナ隔離のため)。
+    # MASQUERADEルールやip_forward=1が正しくてもFORWARDチェーンで転送パケットが
+    # 静かに破棄されてしまい、NATが機能しない不具合になっていた。
+    # ens5<->ens5の転送を明示的に許可するルールを最優先(先頭)で追加する。
+    iptables -I FORWARD 1 -i "$IFACE" -o "$IFACE" -j ACCEPT
     echo "NAT_DEBUG iptables nat table after rule add:"
     iptables -t nat -L POSTROUTING -v -n
+    echo "NAT_DEBUG iptables FORWARD chain after rule add:"
+    iptables -L FORWARD -v -n
 
     cat <<UNIT > /etc/systemd/system/nat-masquerade.service
     [Unit]
-    Description=Re-apply NAT MASQUERADE rule on boot
-    After=network.target
+    Description=Re-apply NAT MASQUERADE/FORWARD rules on boot
+    # dockerが後から起動してFORWARDチェーンのポリシー/ルールを上書きする可能性があるため、
+    # docker.serviceの後に実行されるようにする(存在しない場合は無視される)。
+    After=network.target docker.service
 
     [Service]
     Type=oneshot
     # ExecStartはシェルを介さず単一コマンドを直接execするため、"||"を機能させるには
     # /bin/bash -c でラップする必要がある(旧版はこのラップが無く実質壊れていた)。
-    ExecStart=/bin/bash -c "/sbin/iptables -t nat -C POSTROUTING -o $IFACE -j MASQUERADE || /sbin/iptables -t nat -A POSTROUTING -o $IFACE -j MASQUERADE"
+    ExecStart=/bin/bash -c "/sbin/iptables -t nat -C POSTROUTING -o $IFACE -j MASQUERADE || /sbin/iptables -t nat -A POSTROUTING -o $IFACE -j MASQUERADE; /sbin/iptables -C FORWARD -i $IFACE -o $IFACE -j ACCEPT || /sbin/iptables -I FORWARD 1 -i $IFACE -o $IFACE -j ACCEPT"
     RemainAfterExit=true
 
     [Install]
