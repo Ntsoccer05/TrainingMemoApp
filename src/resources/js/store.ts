@@ -9,6 +9,7 @@ import userSessionStorage from "./utils/userSessionStorage";
 //  同じactionを呼ぶことによる二重リクエストを防ぐ)
 let loginUserRequest: Promise<void> | null = null;
 let latestRecordStateRequest: Promise<void> | null = null;
+let loginStateRequest: Promise<void> | null = null;
 
 export default createStore({
     state: {
@@ -71,12 +72,18 @@ export default createStore({
     },
     actions: {
         async loginState({ state }) {
+            // App.vueとHeader.vueが同時にmountして二重発行するのを防ぐため、
+            // 進行中のリクエストがあればそれを待つだけにする(getLoginUserと同様のパターン)
+            if (loginStateRequest) {
+                await loginStateRequest;
+                return;
+            }
             const {
                 getSessionLoginUser,
                 setSessionLoginUser,
                 removeSessionLoginUser,
             } = userSessionStorage();
-            await axios
+            loginStateRequest = axios
                 .get("/api/users")
                 .then((res) => {
                     // ログイン状態取得
@@ -94,7 +101,11 @@ export default createStore({
                     if ((dispAlert.value = true)) {
                         state.dispAlertModal = true;
                     }
+                })
+                .finally(() => {
+                    loginStateRequest = null;
                 });
+            await loginStateRequest;
         },
 
         async getLoginUser({ state }) {

@@ -1,7 +1,15 @@
 <template>
   <div class="m-0 p-0 h-screen">
-    <Header />
-    <router-view />
+    <div v-if="isMaintenance" class="flex h-full items-center justify-center text-center p-8">
+      <div>
+        <p class="text-xl font-bold mb-2">ただいまメンテナンス中です</p>
+        <p class="text-gray-600">毎日 1:00〜4:00 の間はメンテナンスのためご利用いただけません。<br />しばらく経ってから再度アクセスしてください。</p>
+      </div>
+    </div>
+    <template v-else>
+      <Header />
+      <router-view />
+    </template>
   </div>
 </template>
 
@@ -9,12 +17,17 @@
 import { onMounted } from "vue";
 import Header from "./components/headerMenu/Header.vue";
 import useHoldLoginState from "./composables/certification/useHoldLoginState";
+import useMaintenanceMode from "./composables/useMaintenanceMode";
 
 //ログイン状態をリロードしても維持するため
 const { holdLoginState } = useHoldLoginState();
+const { isMaintenance } = useMaintenanceMode();
 
 // async await を使わないとユーザ情報取得する前にMountedサイクルが終了してしまう
 onMounted(async () => {
+  if (isMaintenance.value) {
+    return;
+  }
   await holdLoginState();
 });
 </script>

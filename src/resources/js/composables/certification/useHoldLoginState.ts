@@ -1,8 +1,6 @@
 import { ref, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
-import useNotLoginedRedirect from "./useNotLoginedRedirect";
-import axios from "axios";
 import userSessionStorage from "../../utils/userSessionStorage";
 
 export default function useHoldLoginState() {
@@ -20,16 +18,9 @@ export default function useHoldLoginState() {
             return;
         } else {
             // 非同期処理呼び出しのため async await
+            // loginStateアクション自体が/api/usersを取得しisLoginedを更新するため、
+            // ここで別途同じAPIを呼び直す必要はない
             await store.dispatch("loginState");
-            await axios
-                .get("/api/users")
-                .then((res) => {
-                    // ログイン状態取得
-                    isLogined.value = true;
-                })
-                .catch((err) => {
-                    useNotLoginedRedirect(err);
-                });
             // nextTickは非同期処理完了後に呼び出されるのでisLoginedを取得できる
             nextTick(() => {
                 isLogined.value = store.getters.isLogined;

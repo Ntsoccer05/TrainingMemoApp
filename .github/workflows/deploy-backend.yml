@@ -118,7 +118,7 @@ jobs:
               MAIL_USERNAME: "trainingMemoApp@gmail.com",
               MAIL_PASSWORD: $mail_password,
               MAIL_FROM_ADDRESS: "trainingMemoApp@gmail.com",
-              MAIL_FROM_NAME: "trainingMemo",
+              MAIL_FROM_NAME: "トレメモ",
               GOOGLE_CLIENT_ID: $google_client_id,
               GOOGLE_CLIENT_SECRET: $google_client_secret,
               RUNTIME_CLASS: "Bref\\ConsoleRuntime\\Main"
@@ -152,7 +152,7 @@ jobs:
               MAIL_USERNAME: "trainingMemoApp@gmail.com",
               MAIL_PASSWORD: $mail_password,
               MAIL_FROM_ADDRESS: "trainingMemoApp@gmail.com",
-              MAIL_FROM_NAME: "trainingMemo",
+              MAIL_FROM_NAME: "トレメモ",
               GOOGLE_CLIENT_ID: $google_client_id,
               GOOGLE_CLIENT_SECRET: $google_client_secret,
               RUNTIME_CLASS: "Bref\\FpmRuntime\\Main"

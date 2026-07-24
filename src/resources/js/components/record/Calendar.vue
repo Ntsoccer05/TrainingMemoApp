@@ -225,13 +225,17 @@ const onPageChange = async (page: { month: number; year: number }) => {
   if (fetchedMonths.has(key)) {
     return;
   }
+  // 未ログイン時は/api/recordContentがauth:sanctum保護下にあり必ず401になるため呼び出さない
+  if (!loginUser.value.id) {
+    return;
+  }
   const { from, to } = threeMonthRangeEndingAt(page.year, page.month);
   // getRecords()は内部でエラーをcatchして握りつぶすため例外は投げられない。
   // 成功時は必ずrecords.valueがres.data.recordsという新しい配列参照に置き換わる一方、
   // 失敗時(.catch内)はrecords.valueに一切触れないため参照は変化しない。
   // これを利用してこの呼び出しが実際に成功したかどうかを判定する。
   const beforeRecords = records.value;
-  await getRecords(loginUser.value.id || 0, "", from, to);
+  await getRecords(loginUser.value.id, "", from, to);
   if (records.value !== beforeRecords) {
     // 取得した3ヶ月分(対象月とその2ヶ月前まで)をまとめて取得済みとして記録する
     for (let i = 0; i <= 2; i++) {
@@ -262,10 +266,9 @@ onMounted(async () => {
     const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
     fetchedMonths.add(monthKey(d.getFullYear(), d.getMonth() + 1));
   }
+  // 未ログイン時は/api/recordContentがauth:sanctum保護下にあり必ず401になるため呼び出さない
   if (loginUser.value.id) {
     await getRecords(loginUser.value.id, "", initialFrom, initialTo);
-  } else {
-    await getRecords(0, "", initialFrom, initialTo);
   }
   isLoaded.value = true;
   emits("compGetData", true);

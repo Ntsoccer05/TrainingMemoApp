@@ -39,7 +39,7 @@ class InquiryToMail extends Mailable
     public function envelope()
     {
         // from: <email>名前となる
-        $from = new Address(config('mail.from.address'), config('app.name'));
+        $from = new Address(config('mail.from.address'), config('mail.from.name'));
         if($this->name){
             $subject = $this->name.'様お問合せありがとうございます';
         }else{
