@@ -24,6 +24,9 @@ export default createStore({
         recorded_at: "",
         compGetData: false,
         dispAlertModal: false,
+        // ログイン状態の確認(/api/users)が一度でも完了したか。
+        // Header.vue等が独自に/api/usersを呼び直さず、この完了を待つだけで済むようにする
+        authChecked: false,
     },
     getters: {
         isLogined: (state) => state.isLogined,
@@ -34,6 +37,7 @@ export default createStore({
         getRecordedAt: (state) => state.recorded_at,
         compGetData: (state) => state.compGetData,
         dispAlertModal: (state) => state.dispAlertModal,
+        authChecked: (state) => state.authChecked,
     },
     mutations: {
         LoginState(state) {
@@ -42,6 +46,9 @@ export default createStore({
         },
         setIsLogined(state, value) {
             state.isLogined = value;
+        },
+        setAuthChecked(state, value) {
+            state.authChecked = value;
         },
         LogoutState(state) {
             // ログアウト状態
@@ -104,6 +111,7 @@ export default createStore({
                 })
                 .finally(() => {
                     loginStateRequest = null;
+                    state.authChecked = true;
                 });
             await loginStateRequest;
         },

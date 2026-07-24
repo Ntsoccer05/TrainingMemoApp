@@ -236,10 +236,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted, computed, watchEffect, ComputedRef } from "vue";
+import { ref, computed, watchEffect, ComputedRef } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useStore } from "vuex";
-import useHoldLoginState from "../../composables/certification/useHoldLoginState";
 import { LoginUser } from "../../types/loginUser";
 import axios from "axios";
 
@@ -248,7 +247,9 @@ const route = useRoute();
 const store = useStore();
 
 // データ取得できたか
-const isloaded = ref<boolean>(false);
+// ログイン状態の確認はApp.vueが1回だけ行い、その完了をここではstore経由で参照するだけにする
+// (Header.vueが独自に/api/usersを呼び直すと二重リクエストになるため)
+const isloaded: ComputedRef<boolean> = computed(() => store.getters.authChecked);
 
 const recorded_day = ref<string>("");
 const recordedAt = ref<string>("");
@@ -265,9 +266,6 @@ const dispAlertMessage = ref<string>("");
 
 // ログイン状態をVuexより取得
 const isLogined: ComputedRef<boolean> = computed(() => store.state.isLogined);
-
-//ちらつき防止のためログイン状態取得
-const { holdLoginState } = useHoldLoginState();
 
 watchEffect(() => {
   paramName.value = route.name as string;
@@ -286,14 +284,6 @@ const closeHumbuger = (): void => {
   }
 };
 
-onMounted(async () => {
-  //ちらつき防止のためログイン状態取得
-  await holdLoginState();
-  if (isLogined.value === false || isLogined.value === true) {
-    isloaded.value = true;
-  }
-});
-
 // ログアウト処理
 const logout = async () => {
   await axios
@@ -309,9 +299,6 @@ const logout = async () => {
         }
         // ログイン状態を変更するためVuexより呼び出し
         store.commit("LogoutState");
-        //ページ再読み込み
-        // alert("ログアウトしました。");
-        holdLoginState();
       }
     })
     .catch((err) => {});

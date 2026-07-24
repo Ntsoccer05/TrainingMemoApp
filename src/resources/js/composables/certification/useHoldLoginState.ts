@@ -15,6 +15,7 @@ export default function useHoldLoginState() {
         if (sessionLoginUser) {
             isLogined.value = true;
             store.commit("setIsLogined", true);
+            store.commit("setAuthChecked", true);
             return;
         } else {
             // 非同期処理呼び出しのため async await
