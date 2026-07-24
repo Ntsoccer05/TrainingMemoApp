@@ -128,6 +128,7 @@ data "aws_iam_policy_document" "github_actions_permissions" {
       "iam:TagRole",
       "iam:ListRolePolicies",
       "iam:GetRolePolicy",
+      "iam:ListAttachedRolePolicies",
       "acm:DescribeCertificate",
       "acm:RequestCertificate",
       "acm:ListCertificates",
