@@ -1,5 +1,4 @@
 import boto3
-import requests
 import datetime
 import pytz
 
@@ -9,21 +8,6 @@ rds = boto3.client('rds')
 # RDS の ID
 RDS_INSTANCE_ID = "training-memo"
 
-# 日本の祝日 API
-HOLIDAY_API = "https://holidays-jp.github.io/api/v1/date.json"
-
-def is_holiday():
-    """今日が祝日かどうかを判定"""
-    today = datetime.datetime.today().strftime("%Y-%m-%d")
-    response = requests.get(HOLIDAY_API)
-    holidays = response.json()
-    return today in holidays
-
-def is_weekend():
-    """土日かどうかを判定"""
-    today = datetime.datetime.today().weekday()
-    return today == 5 or today == 6   # 土曜日(5) or 日曜日(6)ならTrue
-
 def lambda_handler(event, context):
     """EventBridge からの呼び出しを処理"""
     # 日本のタイムゾーン (JST, UTC+9)
@@ -32,22 +16,11 @@ def lambda_handler(event, context):
     current_hour = now.hour
     print(f"Current Hour (Japan Time): {current_hour}")  # 現在時刻をログに出力
 
-    holiday = is_holiday()
-    weekend = is_weekend()
-
-    # 休日・祝日の 00:00 ～ 07:00 または 21:00 ～ 24:00 は停止
-    if holiday or weekend:
-        if (0 <= current_hour < 7) or (21 <= current_hour < 24):
-            action = "stop"
-        else:
-            action = "start"
-
-    # 平日の 00:00 ～ 15:00 または 22:00 ～ 24:00 は停止
+    # 曜日・祝日を問わず、毎日 1:00 ～ 4:00 のみ停止。それ以外の時間帯は起動。
+    if 1 <= current_hour < 4:
+        action = "stop"
     else:
-        if (0 <= current_hour < 15) or (22 <= current_hour < 24):
-            action = "stop"
-        else:
-            action = "start"
+        action = "start"
 
     try:
         if action == "start":
