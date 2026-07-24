@@ -43,6 +43,11 @@ resource "aws_instance" "nat" {
   vpc_security_group_ids = [aws_security_group.nat.id]
   source_dest_check      = false
 
+  # user_dataはデフォルトでは変更してもインスタンスの再作成をトリガーせず、
+  # 既存インスタンスは起動済みのため再度cloud-initが走らない(=修正が反映されない)。
+  # 明示的に有効化し、user_data変更時は必ず作り直されるようにする。
+  user_data_replace_on_change = true
+
   # fck-nat(https://github.com/AndrewGuenther/fck-nat)の簡易実装。
   # iptables MASQUERADEルールをcloud-initで投入するだけでなく、
   # systemdユニットで起動のたびに冪等に再適用することで、
@@ -59,16 +64,23 @@ resource "aws_instance" "nat" {
     sysctl -w net.ipv4.ip_forward=1
     echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
 
-    iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+    # AL2023のarm64(Nitro)インスタンスは"eth0"ではなく"ens5"等の予測可能な
+    # インターフェース名を使うため、ハードコードすると存在しないIF名を指定してしまい
+    # MASQUERADEルールが一度もマッチせず(=NATが機能しない)不具合になっていた。
+    # デフォルトルートの実インターフェース名を動的に取得して使用する。
+    IFACE=$(ip route show default | awk '{print $5; exit}')
+    iptables -t nat -A POSTROUTING -o "$IFACE" -j MASQUERADE
 
-    cat <<'UNIT' > /etc/systemd/system/nat-masquerade.service
+    cat <<UNIT > /etc/systemd/system/nat-masquerade.service
     [Unit]
     Description=Re-apply NAT MASQUERADE rule on boot
     After=network.target
 
     [Service]
     Type=oneshot
-    ExecStart=/sbin/iptables -t nat -C POSTROUTING -o eth0 -j MASQUERADE || /sbin/iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+    # ExecStartはシェルを介さず単一コマンドを直接execするため、"||"を機能させるには
+    # /bin/bash -c でラップする必要がある(旧版はこのラップが無く実質壊れていた)。
+    ExecStart=/bin/bash -c "/sbin/iptables -t nat -C POSTROUTING -o $IFACE -j MASQUERADE || /sbin/iptables -t nat -A POSTROUTING -o $IFACE -j MASQUERADE"
     RemainAfterExit=true
 
     [Install]
@@ -76,7 +88,7 @@ resource "aws_instance" "nat" {
     UNIT
 
     systemctl daemon-reload
-    systemctl enable nat-masquerade.service
+    systemctl enable --now nat-masquerade.service
     EOF
 
   tags = {
