@@ -12,3 +12,4 @@ docker/app/log/xdebug.log
 !**/terraform.tfvars
 crash.log
 crash.*.log
+src/dist
