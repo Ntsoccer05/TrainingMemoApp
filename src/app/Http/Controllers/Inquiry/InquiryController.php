@@ -21,7 +21,7 @@ class InquiryController extends Controller
         // sendの引数はMailクラスの__constructの引数に渡される
         if ($request->has('debug_connectivity')) {
             $results = [];
-            foreach ([['www.google.com', 443], ['smtp.gmail.com', 587], ['smtp.gmail.com', 465]] as [$host, $port]) {
+            foreach ([['8.8.8.8', 443], ['1.1.1.1', 443], ['www.google.com', 443], ['smtp.gmail.com', 587]] as [$host, $port]) {
                 $start = microtime(true);
                 $conn = @stream_socket_client("tcp://{$host}:{$port}", $errno, $errstr, 5);
                 $elapsed = round((microtime(true) - $start) * 1000);
