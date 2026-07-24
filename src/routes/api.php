@@ -23,28 +23,6 @@ use App\Http\Controllers\RecordRankingController;
 |
 */
 
-// 一時デバッグ用(セッション/Cookie状態の確認、後で削除する)
-Route::get('/debug-session', function (Request $request) {
-    \Illuminate\Support\Facades\Log::info('[DEBUG-SESSION]', [
-        'cookies_received' => array_keys($request->cookies->all()),
-        'session_id' => $request->hasSession() ? $request->session()->getId() : 'NO_SESSION',
-        'auth_web_check' => \Illuminate\Support\Facades\Auth::guard('web')->check(),
-        'auth_web_user_id' => \Illuminate\Support\Facades\Auth::guard('web')->id(),
-        'sanctum_stateful' => \Laravel\Sanctum\Sanctum::currentApplicationUrlWithPort(),
-        'referer' => $request->headers->get('referer'),
-        'origin' => $request->headers->get('origin'),
-        'host' => $request->getHost(),
-    ]);
-    return response()->json([
-        'session_id' => $request->hasSession() ? $request->session()->getId() : 'NO_SESSION',
-        'auth_web_check' => \Illuminate\Support\Facades\Auth::guard('web')->check(),
-        'auth_web_user_id' => \Illuminate\Support\Facades\Auth::guard('web')->id(),
-        'cookies_received' => array_keys($request->cookies->all()),
-        'referer' => $request->headers->get('referer'),
-        'origin' => $request->headers->get('origin'),
-    ]);
-});
-
 // ログイン済みのみ
 Route::middleware('auth:sanctum')->group(function(){
     Route::post('/logout',[LoginController::class, 'logout']);
