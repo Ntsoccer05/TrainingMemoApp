@@ -91,7 +91,10 @@ jobs:
             --arg app_key "$APP_KEY" \
             '{Variables: {
               APP_ENV: "production",
+              APP_URL: "https://training-memo.com",
+              SANCTUM_STATEFUL_DOMAINS: "training-memo.com",
               SESSION_DRIVER: "database",
+              SESSION_DOMAIN: "training-memo.com",
               CACHE_DRIVER: "database",
               LOG_CHANNEL: "stderr",
               DB_CONNECTION: "mysql",
@@ -110,7 +113,10 @@ jobs:
             --arg app_key "$APP_KEY" \
             '{Variables: {
               APP_ENV: "production",
+              APP_URL: "https://training-memo.com",
+              SANCTUM_STATEFUL_DOMAINS: "training-memo.com",
               SESSION_DRIVER: "database",
+              SESSION_DOMAIN: "training-memo.com",
               CACHE_DRIVER: "database",
               LOG_CHANNEL: "stderr",
               DB_CONNECTION: "mysql",
