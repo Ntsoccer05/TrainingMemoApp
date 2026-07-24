@@ -68,7 +68,11 @@ class LoginController extends Controller
     // ソーシャルログイン処理
     public function getProviderOAuthURL(string $provider)
     {
-        $redirectUrl = Socialite::driver($provider)->redirect()->getTargetUrl();
+        try {
+            $redirectUrl = Socialite::driver($provider)->redirect()->getTargetUrl();
+        } catch (\Throwable $e) {
+            return response()->json(["message" => $e->getMessage(), "class" => get_class($e)], 500);
+        }
 
         return response()->json([
             'redirectUrl' => $redirectUrl
