@@ -19,8 +19,13 @@ class InquiryController extends Controller
         $email = $contents['email'];
 
         // sendの引数はMailクラスの__constructの引数に渡される
-        Mail::to($email)->send( New InquiryToMail($contents) );
-        Mail::to(config('mail.from.address'))->send( New InquiryFromMail($contents) );
+        try {
+            Mail::to($email)->send( New InquiryToMail($contents) );
+            Mail::to(config('mail.from.address'))->send( New InquiryFromMail($contents) );
+        } catch (\Throwable $e) {
+            error_log('[INQUIRY_DEBUG] ' . get_class($e) . ': ' . $e->getMessage());
+            return response()->json(["status"=> 500, "message"=> $e->getMessage(), "class"=> get_class($e), "mail_source_ip_config" => config('mail.mailers.smtp.source_ip')], 500);
+        }
 
         return response()->json(["status"=> 200, "message"=> "ユーザと管理者にお問い合わせ内容が伝えられました。"]);
     }
