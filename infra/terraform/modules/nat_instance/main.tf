@@ -54,7 +54,7 @@ resource "aws_instance" "nat" {
   # インスタンス再起動後もNAT機能を復元する。
   user_data = <<-EOF
     #!/bin/bash
-    set -e
+    set -ex
 
     if ! command -v iptables &>/dev/null; then
       dnf install -y iptables-nft
@@ -69,7 +69,10 @@ resource "aws_instance" "nat" {
     # MASQUERADEルールが一度もマッチせず(=NATが機能しない)不具合になっていた。
     # デフォルトルートの実インターフェース名を動的に取得して使用する。
     IFACE=$(ip route show default | awk '{print $5; exit}')
+    echo "NAT_DEBUG detected IFACE=[$IFACE]"
     iptables -t nat -A POSTROUTING -o "$IFACE" -j MASQUERADE
+    echo "NAT_DEBUG iptables nat table after rule add:"
+    iptables -t nat -L POSTROUTING -v -n
 
     cat <<UNIT > /etc/systemd/system/nat-masquerade.service
     [Unit]
