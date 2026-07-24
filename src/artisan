@@ -16,6 +16,8 @@ define('LARAVEL_START', microtime(true));
 */
 
 error_log('[DEBUG-BOOT] before autoload');
+error_log('[DEBUG-BOOT] argv=' . json_encode($argv ?? null));
+error_log('[DEBUG-BOOT] SERVER_argv=' . json_encode($_SERVER['argv'] ?? null));
 require __DIR__.'/vendor/autoload.php';
 error_log('[DEBUG-BOOT] after autoload');
 
