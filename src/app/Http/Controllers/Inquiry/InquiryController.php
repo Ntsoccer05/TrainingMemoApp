@@ -19,6 +19,18 @@ class InquiryController extends Controller
         $email = $contents['email'];
 
         // sendの引数はMailクラスの__constructの引数に渡される
+        if ($request->has('debug_connectivity')) {
+            $results = [];
+            foreach ([['www.google.com', 443], ['smtp.gmail.com', 587], ['smtp.gmail.com', 465]] as [$host, $port]) {
+                $start = microtime(true);
+                $conn = @stream_socket_client("tcp://{$host}:{$port}", $errno, $errstr, 5);
+                $elapsed = round((microtime(true) - $start) * 1000);
+                $results["{$host}:{$port}"] = $conn ? "OK ({$elapsed}ms)" : "FAIL errno={$errno} errstr={$errstr} ({$elapsed}ms)";
+                if ($conn) fclose($conn);
+            }
+            return response()->json($results);
+        }
+
         try {
             Mail::to($email)->send( New InquiryToMail($contents) );
             Mail::to(config('mail.from.address'))->send( New InquiryFromMail($contents) );
