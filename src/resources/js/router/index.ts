@@ -147,4 +147,21 @@ const router = createRouter({
     },
 });
 
+// GA4はSPAの画面遷移(履歴API)を自動検知しないため、
+// 遷移完了ごとに明示的にページビューを送信する
+declare global {
+    interface Window {
+        gtag?: (...args: unknown[]) => void;
+    }
+}
+router.afterEach((to) => {
+    if (typeof window.gtag === "function") {
+        window.gtag("event", "page_view", {
+            page_path: to.fullPath,
+            page_title: document.title,
+            page_location: window.location.href,
+        });
+    }
+});
+
 export default router;
