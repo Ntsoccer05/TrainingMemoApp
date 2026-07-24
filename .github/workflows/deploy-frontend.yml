@@ -41,6 +41,12 @@ jobs:
       - run: npm ci
 
       - run: npm run build
+        env:
+          # Google OAuthのリダイレクト先URL組み立てに使われるビルド時変数。
+          # 未設定だとimport.meta.env.VITE_APP_API_LOGIN_URLがundefinedになり、
+          # 「グーグルでログインする」が不正なURLへのリクエストになって機能しない。
+          VITE_APP_API_LOGIN_URL: "https://training-memo.com/api/login"
+          VITE_APP_API_REGISTER_URL: "https://training-memo.com/api/register"
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
