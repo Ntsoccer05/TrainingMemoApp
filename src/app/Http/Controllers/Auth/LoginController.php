@@ -77,27 +77,21 @@ class LoginController extends Controller
 
     public function handleProviderCallback(Request $request, string $provider)
     {
-        try {
-            $providerUser = Socialite::driver($provider)->stateless()->user();
+        $providerUser = Socialite::driver($provider)->stateless()->user();
 
-            $user = User::where('email', $providerUser->getEmail())->first();
+        $user = User::where('email', $providerUser->getEmail())->first();
 
-            if ($user) {
-                Auth::guard()->login($user, true);
-                return response()->json([
-                    'user' => $user,
-                    'debug_auth_check' => Auth::guard('web')->check(),
-                    'debug_session_id' => $request->session()->getId(),
-                ]);
-            }else{
-                return response()->json([
-                    'provider' => $provider,
-                    'email' => $providerUser->getEmail(),
-                    'token' => $providerUser->token,
-                ]);
-            }
-        } catch (\Throwable $e) {
-            return response()->json(["debug_message" => $e->getMessage(), "debug_class" => get_class($e)], 500);
+        if ($user) {
+            Auth::guard()->login($user, true);
+            return response()->json([
+                'user' => $user
+            ]);
+        }else{
+            return response()->json([
+                'provider' => $provider,
+                'email' => $providerUser->getEmail(),
+                'token' => $providerUser->token,
+            ]);
         }
     }
 }

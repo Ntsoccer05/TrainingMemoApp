@@ -18,12 +18,7 @@ onMounted(() => {
         code: route.query.code,
         state: route.query.code,
       })
-      .catch((err) => {
-        console.log("GOOGLE_CALLBACK_DEBUG_ERROR", JSON.stringify(err.response ? err.response.data : err.message));
-        throw err;
-      })
       .then((res) => {
-        console.log("GOOGLE_CALLBACK_DEBUG", JSON.stringify(res.data));
         if (res.data.status_code === "404") {
           router.push("/login");
         } else if (res.data.provider) {
