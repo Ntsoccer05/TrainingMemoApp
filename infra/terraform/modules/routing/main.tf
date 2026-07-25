@@ -150,6 +150,27 @@ resource "aws_cloudfront_distribution" "main" {
     }
   }
 
+  # SitemapController(/tr-sitemap)がAPI Gatewayへ届かず、デフォルトのS3+404→200書き換えで
+  # index.htmlが返ってしまいGoogle Search Consoleのサイトマップ取得が失敗していたため追加。
+  ordered_cache_behavior {
+    path_pattern           = "/tr-sitemap"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "api-gateway"
+    viewer_protocol_policy = "https-only"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+
+    forwarded_values {
+      query_string = false
+      headers      = ["Accept"]
+      cookies {
+        forward = "none"
+      }
+    }
+  }
+
   custom_error_response {
     error_code         = 403
     response_code      = 200
