@@ -12,5 +12,6 @@
         "@/*": ["./resources/js/*"]
       },
   },
-  "include": ["./resources/js/**/*"]
+  "include": ["./resources/js/**/*"],
+  "exclude": ["./resources/js/**/*.test.ts"]
 }

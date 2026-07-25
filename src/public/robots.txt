@@ -1,2 +1,3 @@
 User-agent: *
 Disallow:
+Sitemap: https://training-memo.com/tr-sitemap

@@ -1,10 +1,16 @@
+import { SeoPageConfig } from "../types/seo";
+
 const COMMON_KEYWORDS = "筋トレ, ジムトレ, トレーニング, 全てのトレーニング";
+
+export const SITE_URL = "https://training-memo.com";
+export const OG_IMAGE =
+    "https://training-memo.s3.ap-northeast-1.amazonaws.com/icon.ico";
 
 function mergeKeywords(base: string) {
     return `${base}, ${COMMON_KEYWORDS}`;
 }
 
-export const SEO = {
+export const SEO: Record<string, SeoPageConfig> = {
     DEFAULT: {
         title: "トレーニング記録 | 毎日の運動を簡単に管理・メモできるサービス",
         description:
@@ -82,7 +88,7 @@ export const SEO = {
         keywords: mergeKeywords(
             "トレメモ, メニュー選択, 種目追加, トレーニング種目"
         ),
-        robots: "index, follow",
+        robots: "noindex, follow",
     },
     record: {
         title: "トレーニング記録詳細 | トレメモ",
@@ -91,14 +97,14 @@ export const SEO = {
         keywords: mergeKeywords(
             "トレメモ, 記録詳細, トレーニングログ, 運動履歴"
         ),
-        robots: "index, follow",
+        robots: "noindex, follow",
     },
     addMenu: {
         title: "メニュー追加 | トレメモ",
         description:
             "新しいトレーニング種目を追加して、記録をさらに充実させましょう。",
         keywords: mergeKeywords("トレメモ, メニュー追加, トレーニング種目追加"),
-        robots: "index, follow",
+        robots: "noindex, follow",
     },
     userRecordRanking: {
         title: "ユーザー記録ランキング | トレメモ",
