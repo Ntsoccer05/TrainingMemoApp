@@ -3,8 +3,7 @@ import { SeoPageConfig } from "../types/seo";
 const COMMON_KEYWORDS = "筋トレ, ジムトレ, トレーニング, 全てのトレーニング";
 
 export const SITE_URL = "https://training-memo.com";
-export const OG_IMAGE =
-    "https://training-memo.s3.ap-northeast-1.amazonaws.com/icon.ico";
+export const OG_IMAGE = "https://training-memo.com/og-image.jpg";
 
 function mergeKeywords(base: string) {
     return `${base}, ${COMMON_KEYWORDS}`;
