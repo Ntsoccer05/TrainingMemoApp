@@ -8,6 +8,7 @@ use App\Http\Controllers\RecordContentController;
 use App\Http\Controllers\RecordController;
 use App\Http\Controllers\RecordMenuController;
 use App\Http\Controllers\Auth\ForgetPasswordController;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Inquiry\InquiryController;
 use App\Http\Controllers\RecordRankingController;
 
@@ -45,6 +46,9 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('/recordRanking/user', [RecordRankingController::class, 'index']);
 });
 Route::get('/recordRanking/users', [RecordRankingController::class, 'show']);
+
+// EventBridge Schedulerからのウォームアップping用(DB停止時間帯は除外してスケジュールしている)
+Route::get('/health', [HealthController::class, 'check']);
 
 // ログイン済みのみ
 Route::middleware('auth:sanctum')->get('users', [LoginController::class, 'user']);

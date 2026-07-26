@@ -224,3 +224,88 @@ resource "aws_lambda_permission" "apigw" {
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.app.execution_arn}/*/*"
 }
+
+# ------------------------------------------------------------------
+# 5/5: ウォームアップ(EventBridge Schedulerによる5分間隔ping)
+# ------------------------------------------------------------------
+# API Gateway/CloudFrontを経由せず、Lambda関数を直接invokeする(muuv-e-partsプロジェクトの
+# lambda_warmupモジュールと同じ方式)。ペイロードはAPI Gateway v2形式のGET /api/healthを
+# 模したものにし、Brefの FpmRuntime が正しくHTTPリクエストとして解釈できるようにする。
+# 実測(CloudWatch Logs Insights)により、このLambdaの実行環境は約8〜10.5分でコールドスタート
+# する(=5分間隔なら3〜5分の安全マージンがある)ことを確認済み。
+# 実行時間帯は毎日5:00〜24:00(JST)のみとする。4:00〜5:00・24:00〜翌1:00は利用者が
+# ごくわずかな想定のため対象外とし、1:00〜4:00はRDS停止中(ping自体が無意味)のため元々対象外。
+data "aws_iam_policy_document" "warmup_scheduler_assume_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    effect  = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["scheduler.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "warmup_scheduler" {
+  name               = "${var.project_name}-lambda-warmup-scheduler-role"
+  assume_role_policy = data.aws_iam_policy_document.warmup_scheduler_assume_role.json
+}
+
+data "aws_iam_policy_document" "warmup_scheduler_lambda_invoke" {
+  statement {
+    sid       = "AllowLambdaInvoke"
+    effect    = "Allow"
+    actions   = ["lambda:InvokeFunction"]
+    resources = [aws_lambda_function.app.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "warmup_scheduler_lambda_invoke" {
+  name   = "lambda-invoke"
+  role   = aws_iam_role.warmup_scheduler.id
+  policy = data.aws_iam_policy_document.warmup_scheduler_lambda_invoke.json
+}
+
+resource "aws_scheduler_schedule" "lambda_warmup" {
+  name       = "${var.project_name}-laravel-app-warmup"
+  group_name = "default"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  # 毎日5:00〜24:00(JST)の間、5分おき。
+  schedule_expression          = "cron(0/5 5-23 * * ? *)"
+  schedule_expression_timezone = "Asia/Tokyo"
+
+  target {
+    arn      = aws_lambda_function.app.arn
+    role_arn = aws_iam_role.warmup_scheduler.arn
+
+    input = jsonencode({
+      version         = "2.0"
+      routeKey        = "$default"
+      rawPath         = "/api/health"
+      rawQueryString  = ""
+      headers         = { accept = "application/json" }
+      requestContext = {
+        http = {
+          method   = "GET"
+          path     = "/api/health"
+          protocol = "HTTP/1.1"
+          sourceIp = "127.0.0.1"
+        }
+      }
+      isBase64Encoded = false
+    })
+  }
+}
+
+resource "aws_lambda_permission" "warmup_scheduler" {
+  statement_id  = "AllowEventBridgeSchedulerWarmup"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.app.function_name
+  principal     = "scheduler.amazonaws.com"
+  source_arn    = aws_scheduler_schedule.lambda_warmup.arn
+}
