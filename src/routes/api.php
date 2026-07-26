@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -48,10 +47,7 @@ Route::middleware('auth:sanctum')->group(function(){
 Route::get('/recordRanking/users', [RecordRankingController::class, 'show']);
 
 // ログイン済みのみ
-Route::middleware('auth:sanctum')->get('users', function(Request $request){
-    // コントローラーでも$request->user();でログインしているユーザ情報を取得できる
-    return $request->user();
-});
+Route::middleware('auth:sanctum')->get('users', [LoginController::class, 'user']);
 
 Route::post('/login',[LoginController::class, 'login']);
 Route::post('/register',[RegisterController::class, 'register']);

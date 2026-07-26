@@ -14,9 +14,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// `/tr-sitemap` ルートを最初に定義
+// SPA本体はS3+CloudFrontから直接配信しており(deploy-frontend.yml)、
+// このLaravel(Lambda)側はAPIのみを提供する。webルートはこのサイトマップのみ。
 Route::get('/tr-sitemap', [SitemapController::class, 'getSitemap']);
-
-Route::get('/{any}', function () {
-    return view('layout');
-})->where('any', '.*');

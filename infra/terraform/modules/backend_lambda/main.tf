@@ -118,6 +118,7 @@ resource "aws_lambda_function" "app" {
   function_name = "${var.project_name}-laravel-app"
   role          = aws_iam_role.lambda_exec.arn
   runtime       = "provided.al2"
+  architectures = ["arm64"]
   handler       = "public/index.php"
   timeout       = 28
   memory_size   = 512
@@ -155,6 +156,7 @@ resource "aws_lambda_function" "artisan" {
   function_name = "${var.project_name}-laravel-artisan"
   role          = aws_iam_role.lambda_exec.arn
   runtime       = "provided.al2"
+  architectures = ["arm64"]
   handler       = "artisan"
   timeout       = 120
   memory_size   = 512

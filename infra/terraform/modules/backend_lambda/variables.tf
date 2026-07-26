@@ -30,20 +30,20 @@ variable "deploy_object_key" {
   default     = "backend/placeholder.zip"
 }
 
-# ⚠️ 未検証: バージョン番号(:56)は執筆時点の推測値。
-# 実際にapplyする前に `aws lambda list-layer-versions --layer-name php-82-fpm --region ap-northeast-1`
+# arm64(Graviton2)版。x86版よりGB秒あたり課金が約20%安く、コールドスタート時のCPU性能も同等以上。
+# バージョン番号(:101)は composer.json で固定している bref/bref ^2.4 に同梱された
+# vendor/bref/bref/layers.json (ap-northeast-1 / arm-php-82-fpm) の値。
+# 新しいBrefバージョンに上げた際は `aws lambda list-layer-versions --layer-name arm-php-82-fpm --region ap-northeast-1`
 # で最新バージョンを確認し、必要なら更新すること。
 variable "bref_php_layer_arn" {
-  description = "Bref公式 php-82-fpm レイヤーARN(ap-northeast-1)"
+  description = "Bref公式 arm-php-82-fpm レイヤーARN(ap-northeast-1, arm64)"
   type        = string
-  default     = "arn:aws:lambda:ap-northeast-1:534081306603:layer:php-82-fpm:56"
+  default     = "arn:aws:lambda:ap-northeast-1:534081306603:layer:arm-php-82-fpm:101"
 }
 
-# ⚠️ 未検証: FPM版のバージョン番号(:56)を暫定的に流用している。
-# 実際にapplyする前に `aws lambda list-layer-versions --layer-name php-82 --region ap-northeast-1`
-# で最新バージョンを確認し、必要なら更新すること。
+# arm64(Graviton2)版のコンソール/CLI実行用レイヤー。バージョン番号の出典・更新方法はFPM版と同じ。
 variable "bref_console_layer_arn" {
-  description = "Bref公式 php-82(コンソール/CLI実行用、FPMではない)レイヤーARN(ap-northeast-1)"
+  description = "Bref公式 arm-php-82(コンソール/CLI実行用、FPMではない)レイヤーARN(ap-northeast-1, arm64)"
   type        = string
-  default     = "arn:aws:lambda:ap-northeast-1:534081306603:layer:php-82:56"
+  default     = "arn:aws:lambda:ap-northeast-1:534081306603:layer:arm-php-82:101"
 }

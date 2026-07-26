@@ -55,6 +55,40 @@ jobs:
 
       - run: composer install --no-dev --optimize-autoloader --prefer-dist
 
+      - name: Cache Laravel config/routes/events for faster Lambda cold start
+        # config:cache はビルド時点でconfig()の解決結果をbootstrap/cache/config.phpに固定してZIPに含める。
+        # ここで本番相当の値(DB_PASSWORD/APP_KEY等)を渡さないと、空値がキャッシュされて
+        # Lambda側の環境変数(後段の Configure Lambda environment variables ステップで設定)が
+        # 一切参照されなくなり本番が壊れるため、値は下のステップと必ず同じ内容に保つこと。
+        env:
+          APP_ENV: production
+          APP_URL: https://training-memo.com
+          SANCTUM_STATEFUL_DOMAINS: training-memo.com
+          SESSION_DRIVER: database
+          SESSION_DOMAIN: training-memo.com
+          CACHE_DRIVER: database
+          LOG_CHANNEL: stderr
+          DB_CONNECTION: mysql
+          DB_HOST: training-memo.clc4qko0ggkz.ap-northeast-1.rds.amazonaws.com
+          DB_PORT: "3306"
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          DB_USERNAME: training0512
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          APP_KEY: ${{ secrets.APP_KEY }}
+          MAIL_MAILER: smtp
+          MAIL_HOST: smtp.gmail.com
+          MAIL_PORT: "587"
+          MAIL_USERNAME: trainingMemoApp@gmail.com
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          MAIL_FROM_ADDRESS: trainingMemoApp@gmail.com
+          MAIL_FROM_NAME: トレメモ
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        run: |
+          php artisan config:cache
+          php artisan route:cache
+          php artisan event:cache
+
       - name: Build deployment package
         run: |
           zip -r ../backend.zip . -x "node_modules/*" "tests/*" ".git/*"

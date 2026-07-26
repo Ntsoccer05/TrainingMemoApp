@@ -32,7 +32,7 @@ class AuthServiceProvider extends ServiceProvider
         //
         ResetPassword::createUrlUsing(function (User $user, string $token) {
             // メールのパスワードリセットボタン押下時の遷移先
-            return env('APP_URL').'/password/reset?token121212121='.$token.'1212121212&email='.$user->email;
+            return config('app.url').'/password/reset?token121212121='.$token.'1212121212&email='.$user->email;
         });
     }
 }
