@@ -2,7 +2,6 @@ import { useRoute } from "vue-router";
 import { useHead } from "@unhead/vue";
 import { SEO, SITE_URL, OG_IMAGE } from "../config/seo";
 import { buildCanonicalUrl } from "./seoUrl";
-import { buildWebApplicationJsonLd } from "./seoJsonLd";
 
 export function setSeo(page?: string): void {
     const route = useRoute();
@@ -31,16 +30,7 @@ export function setSeo(page?: string): void {
             { name: "twitter:image", content: OG_IMAGE },
         ],
         link: [{ rel: "canonical", href: canonicalUrl }],
-        script:
-            page === "home"
-                ? [
-                      {
-                          type: "application/ld+json",
-                          innerHTML: JSON.stringify(
-                              buildWebApplicationJsonLd(SITE_URL)
-                          ),
-                      },
-                  ]
-                : [],
+        // WebApplicationのJSON-LDはindex.htmlに静的に埋め込み済み(全ルート共通で
+        // Googlebotの初回クロール時点から読める)。ここでの重複注入はしない。
     });
 }

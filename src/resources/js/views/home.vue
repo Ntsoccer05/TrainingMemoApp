@@ -10,6 +10,11 @@
     </div>
     <!-- カレンダーコンポーネント -->
     <Calendar @compGetData="IsCompGetData" />
+    <div class="text-center text-xs text-gray-400 mt-8 mb-4">
+      <a href="/guide/free-browser-training-log.html" class="mx-1 hover:underline">ブラウザで無料に記録する</a>・
+      <a href="/guide/no-install-training-log.html" class="mx-1 hover:underline">インストール不要という選択</a>・
+      <a href="/guide/web-training-memo.html" class="mx-1 hover:underline">Web版の使い方</a>
+    </div>
   </div>
 </template>
 

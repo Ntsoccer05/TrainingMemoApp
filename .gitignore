@@ -13,3 +13,6 @@ docker/app/log/xdebug.log
 crash.log
 crash.*.log
 src/dist
+
+# Brainstorming visual companion session files
+.superpowers/
