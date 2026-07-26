@@ -101,6 +101,10 @@ jobs:
       - name: Upload deployment package
         run: |
           aws s3 cp ../backend.zip s3://trainingmemo-spa-frontend/backend/${{ github.sha }}.zip
+          # infra/terraform/modules/backend_lambda/variables.tf の deploy_object_key コメント参照:
+          # Terraformがignore_changes中でもUpdateFunctionCodeを発行してしまうケースへの安全弁として、
+          # 固定キー(latest.zip)も常に最新の実コードで上書きしておく。
+          aws s3 cp ../backend.zip s3://trainingmemo-spa-frontend/backend/latest.zip
 
       - name: Update artisan function code
         run: |
