@@ -18,6 +18,11 @@ window.axios = axios;
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 axios.defaults.withCredentials = true;
+// ローカル開発時、Vite dev server(5173/5174)とAPI(Nginx経由)がポートが異なるため、
+// VITE_API_BASE_URLが設定されている場合のみbaseURLを上書きする(本番は相対パスのまま)
+if (import.meta.env.VITE_API_BASE_URL) {
+    axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
+}
 
 /**
  * Echo exposes an expressive API for subscribing to channels and listening

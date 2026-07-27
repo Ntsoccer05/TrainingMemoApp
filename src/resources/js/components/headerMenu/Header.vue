@@ -176,6 +176,13 @@
                   >メニュー別最高記録</router-link
                 >
               </li>
+              <li class="border-b md:border-none">
+                <router-link
+                  class="block px-8 py-2 my-4 hover:bg-gray-600 rounded cursor-pointer"
+                  to="/weight"
+                  >体重管理</router-link
+                >
+              </li>
               <template v-if="loginUser.is_admin == true">
                 <li class="border-b md:border-none">
                   <a

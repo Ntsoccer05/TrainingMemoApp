@@ -27,11 +27,14 @@
         "@kouts/vue-modal": "^5.0.0",
         "@unhead/vue": "^2.0.8",
         "alpinejs": "^3.13.7",
+        "apexcharts": "^6.5.0",
+        "dayjs": "^1.11.21",
         "eslint": "^8.56.0",
         "tw-elements": "^1.1.0",
         "v-calendar": "^3.0.0-alpha.8",
         "vue": "^3.2.45",
         "vue-router": "^4.1.6",
+        "vue3-apexcharts": "^1.11.1",
         "vuedraggable": "^4.1.0",
         "vuex": "^4.0.2"
     }

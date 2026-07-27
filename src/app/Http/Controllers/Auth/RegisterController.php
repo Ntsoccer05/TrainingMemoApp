@@ -9,12 +9,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Socialite\Facades\Socialite;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Services\Auth\RegisterService;
 
 class RegisterController extends Controller
 {
 
     //ユーザ登録処理
-    public function register(RegisterRequest $request)
+    public function register(RegisterRequest $request, RegisterService $registerService)
     {
         $user = User::Create([
             'name' => $request['name'],
@@ -23,6 +24,7 @@ class RegisterController extends Controller
         ]);
 
         if(!is_null($user)) {
+            $registerService->setupDefaultData($user->id);
             Auth::guard()->login($user, true);
             return response()->json(["status_code" => 200, "message" => "登録しました", "user" => $user]);
         }
@@ -32,7 +34,7 @@ class RegisterController extends Controller
     }
 
     //Googleユーザ登録処理
-    public function registerProviderUser(RegisterRequest $request, string $provider)
+    public function registerProviderUser(RegisterRequest $request, string $provider, RegisterService $registerService)
     {
         $request->validate([
             'name' => ['nullable', 'string', 'unique:users'],
@@ -48,6 +50,8 @@ class RegisterController extends Controller
             'email' => $providerUser->getEmail(),
             'password' => null,
         ]);
+
+        $registerService->setupDefaultData($user->id);
 
         Auth::guard()->login($user, true);
 

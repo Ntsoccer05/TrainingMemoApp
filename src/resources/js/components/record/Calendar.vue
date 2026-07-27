@@ -10,6 +10,7 @@ import { DispRecords } from "../../types/record";
 import axios from "axios";
 import { reactive, ref, computed, ComputedRef, watch, onMounted, nextTick } from "vue";
 import userSessionStorage from "../../utils/userSessionStorage";
+import LoadingSpinner from "../common/LoadingSpinner.vue";
 
 const emits = defineEmits<{
   (e: "compGetData", value: boolean): void;
@@ -519,7 +520,7 @@ const moveToday = () => {
       </v-calendar>
     </template>
     <template v-else>
-      <p class="text-center mt-5">データ読み込み中です。少々お待ちください。</p>
+      <LoadingSpinner />
     </template>
     <Modal
       v-model="dispAlertModal"

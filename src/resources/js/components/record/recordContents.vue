@@ -81,9 +81,7 @@
       </table>
     </template>
     <template v-else>
-      <p class="mx-auto mt-10 md:w-6/12 w-11/12 mb-5 font-bold text-center">
-        データ取得中です。しばらくお待ちください。
-      </p>
+      <LoadingSpinner />
     </template>
     <Modal v-model="showModal" :title="menuContent" modal-class="scrollable-modal">
       <div class="scrollable-content">
@@ -142,6 +140,7 @@ import useGetLoginUser from "../../composables/certification/useGetLoginUser";
 import useGetSecondRecordContent from "../../composables/record/useGetSecondRecordContent.js";
 import RecordTable from "./RecordTable.vue";
 import HistoryRecordContents from "./HistoryRecordContents.vue";
+import LoadingSpinner from "../common/LoadingSpinner.vue";
 import useGetHistoryRecordContent from "../../composables/record/useGetHistoryRecordContent.js";
 import axios from "axios";
 import userSessionStorage from "../../utils/userSessionStorage";

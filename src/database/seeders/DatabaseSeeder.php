@@ -19,7 +19,8 @@ class DatabaseSeeder extends Seeder
             MenuSeeder::class,
             RecordStateSeeder::class,
             RecordMenuSeeder::class,
-            RecordContentSeeder::class
+            RecordContentSeeder::class,
+            WeightTagSeeder::class
         ]);
     }
 }

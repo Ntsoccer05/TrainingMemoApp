@@ -28,6 +28,13 @@ export const SEO: Record<string, SeoPageConfig> = {
         ),
         robots: "index, follow",
     },
+    weight: {
+        title: "体重管理 | トレメモ",
+        description:
+            "トレメモの体重管理機能で、日々の体重をグラフとタグ付きメモで記録・分析できます。トレーニング量との相関も確認可能。",
+        keywords: mergeKeywords("体重管理, 体重記録, ダイエット記録, 体重グラフ"),
+        robots: "noindex, nofollow",
+    },
     login: {
         title: "ログイン | トレメモ",
         description:

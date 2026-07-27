@@ -16,6 +16,7 @@ const ResetPassword = () => import("../views/certification/resetPassword.vue");
 const Inquiry = () => import("../views/inquiry/inquiry.vue");
 const UserRecordRanking = () =>
     import("../views/ranking/userRecordRanking.vue");
+const WeightManagement = () => import("../views/weight/weightManagement.vue");
 
 // import Login from '../views/certification/loginPage.vue';
 // import Register from '../views/certification/registerPage.vue';
@@ -116,6 +117,12 @@ const routes = [
         name: "userRecordRanking",
         component: UserRecordRanking,
         // ログインの必要あり
+        meta: { requiresAuth: true },
+    },
+    {
+        path: "/weight",
+        name: "weightManagement",
+        component: WeightManagement,
         meta: { requiresAuth: true },
     },
     {

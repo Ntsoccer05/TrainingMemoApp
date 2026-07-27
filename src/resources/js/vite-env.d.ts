@@ -7,6 +7,7 @@ interface ImportMetaEnv {
   readonly  VITE_APP_API_REGISTER_URL:string,
   readonly VITE_ASANCTUM_STATEFUL_DOMAINS:string,
   readonly VITE_APP_TITLE: string
+  readonly VITE_API_BASE_URL?: string
   // その他の環境変数...
 }
 

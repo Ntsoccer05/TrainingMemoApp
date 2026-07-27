@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, computed, ref, ComputedRef } from "vue";
 import userRecordRankingTable from "../../components/ranking/userRecordRankingTable.vue";
+import LoadingSpinner from "../../components/common/LoadingSpinner.vue";
 import useGetLoginUser from "../../composables/certification/useGetLoginUser";
 import useGetRecordRanking from "../../composables/ranking/useGetRecordRanking";
 import { useRouter } from "vue-router";
@@ -82,9 +83,7 @@ onMounted(async () => {
       />
     </template>
     <template v-else>
-      <p class="mx-auto mt-10 md:w-6/12 w-11/12 mb-5 font-bold md:text-center">
-        データ取得中です。しばらくお待ちください。
-      </p>
+      <LoadingSpinner />
     </template>
   </div>
   <Modal

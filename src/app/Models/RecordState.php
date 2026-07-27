@@ -6,6 +6,7 @@ use App\Models\RecordMenu;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RecordState extends Model
@@ -14,8 +15,8 @@ class RecordState extends Model
 
     // 初期データ入力時にupdated_atカラムへのデータ挿入させなくする
     const UPDATED_AT = NULL;
-    
-    protected $fillable = ['user_id','recorded_at'];
+
+    protected $fillable = ['user_id','recorded_at', 'weight_memo', 'bodyWeight'];
 
     public function user():BelongsTo
     {
@@ -35,5 +36,10 @@ class RecordState extends Model
     public function menu():BelongsTo
     {
         return $this->belongsTo(Menu::class);
+    }
+
+    public function weightTags():BelongsToMany
+    {
+        return $this->belongsToMany(WeightTag::class, 'record_state_weight_tag');
     }
 }
