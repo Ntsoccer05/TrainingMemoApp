@@ -84,9 +84,12 @@ resource "aws_cloudfront_distribution" "main" {
     default_ttl            = 0
     max_ttl                = 0
 
+    # HostをここでLaravel側に転送しないと、CloudFrontはカスタムオリジン(API Gateway)への
+    # リクエストで常にオリジン自身のドメイン(*.execute-api.amazonaws.com)をHostとして送るため、
+    # url()等が生成する絶対URLが本番ドメインからずれてしまう(Filamentログインリダイレクト等で顕在化)。
     forwarded_values {
       query_string = true
-      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin"]
+      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin", "Host"]
       cookies {
         forward = "all"
       }
@@ -105,7 +108,7 @@ resource "aws_cloudfront_distribution" "main" {
 
     forwarded_values {
       query_string = true
-      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin"]
+      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin", "Host"]
       cookies {
         forward = "all"
       }
@@ -124,7 +127,7 @@ resource "aws_cloudfront_distribution" "main" {
 
     forwarded_values {
       query_string = true
-      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin"]
+      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin", "Host"]
       cookies {
         forward = "all"
       }
@@ -143,7 +146,7 @@ resource "aws_cloudfront_distribution" "main" {
 
     forwarded_values {
       query_string = true
-      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin"]
+      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin", "Host"]
       cookies {
         forward = "all"
       }
