@@ -84,12 +84,14 @@ resource "aws_cloudfront_distribution" "main" {
     default_ttl            = 0
     max_ttl                = 0
 
-    # HostをここでLaravel側に転送しないと、CloudFrontはカスタムオリジン(API Gateway)への
-    # リクエストで常にオリジン自身のドメイン(*.execute-api.amazonaws.com)をHostとして送るため、
-    # url()等が生成する絶対URLが本番ドメインからずれてしまう(Filamentログインリダイレクト等で顕在化)。
+    # 注意: headersに"Host"を追加してtraining-memo.comをそのままAPI Gatewayへ転送する案は
+    # 2026-07-27に試したが、カスタムドメイン未設定のexecute-apiエンドポイントがHost不一致で
+    # 403を返し、CloudFrontのcustom_error_response(403→200 index.html)により全APIが
+    # サイレントにSPAへフォールバックする重大な障害を起こしたため回避(Terraform Apply後に即revert)。
+    # Filamentのログインリダイレクトがexecute-apiドメインに飛ぶ問題は別の方法で対応する必要がある。
     forwarded_values {
       query_string = true
-      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin", "Host"]
+      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin"]
       cookies {
         forward = "all"
       }
@@ -108,7 +110,7 @@ resource "aws_cloudfront_distribution" "main" {
 
     forwarded_values {
       query_string = true
-      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin", "Host"]
+      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin"]
       cookies {
         forward = "all"
       }
@@ -127,7 +129,7 @@ resource "aws_cloudfront_distribution" "main" {
 
     forwarded_values {
       query_string = true
-      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin", "Host"]
+      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin"]
       cookies {
         forward = "all"
       }
@@ -146,7 +148,7 @@ resource "aws_cloudfront_distribution" "main" {
 
     forwarded_values {
       query_string = true
-      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin", "Host"]
+      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin"]
       cookies {
         forward = "all"
       }
