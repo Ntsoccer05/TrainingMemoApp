@@ -15,10 +15,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // 2年以上経った記録を削除(毎朝４時に実行)
-        $schedule->command('command:deleteRecords')->dailyAt('4:00');
-        // 記録なし、セット数０の記録を削除(毎朝４時に実行)
-        $schedule->command('command:deleteNothingRecords')->dailyAt('4:00');
+        // 2年以上経った記録を削除(本番ではDBインスタンスが4時に停止しているため4時半に実行)
+        $schedule->command('command:deleteRecords')->dailyAt('4:30');
+        // 記録なし、セット数０の記録を削除(本番ではDBインスタンスが4時に停止しているため4時半に実行)
+        $schedule->command('command:deleteNothingRecords')->dailyAt('4:30');
         // テスト用
         // $schedule->command('command:deleteNothingRecords')->everyMinute();
         // $schedule->command('command:deleteRecords')->everyMinute();

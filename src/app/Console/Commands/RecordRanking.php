@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\Menu;
 use App\Models\RankingRecord;
-use App\Models\RecordContent;
 use App\Models\RecordMenu;
 use App\Models\User;
 use DateTime;
@@ -32,7 +31,7 @@ class RecordRanking extends Command
      *
      * @return int
      */
-    public function handle(Menu $menu, RankingRecord $rankingRecord, User $user, RecordMenu $recordMenu ,RecordContent $recordContent)
+    public function handle(Menu $menu, RankingRecord $rankingRecord, User $user, RecordMenu $recordMenu)
     {
         //データを空にする。
         $rankingRecord->truncate();
@@ -69,15 +68,6 @@ class RecordRanking extends Command
         // $squatMenuRecords = $squatMenus->recordMenus->where('recorded_at','>=' ,$lastweekDay)->get();
         // $deadliftMenuRecords = $deadliftMenus->recordMenus->where('recorded_at','>=' ,$lastweekDay)->get();
         if(!empty($benchMenuRecords[0]->recordMenus)){
-            foreach($benchMenuRecords[0]->recordMenus as $record) {
-                $TopWeightBench[] = $recordContent->where('record_menu_id', $record->id)->first();
-            };
-            usort($TopWeightBench, function($f1, $f2) {
-                return $f2['weight'] - $f1['weight'];
-            });
-            // $sortTopWeightBench = array_column($TopWeightBench, 'weight');
-            // array_multisort($sortTopWeightBench, SORT_DESC, $TopWeightBench, SORT_NUMERIC);
-            dd($TopWeightBench);
             $TopWeightBench = $benchMenuRecords[0]->recordMenus->sortbyDesc('weight');
             $TopVolumeBench = $benchMenuRecords[0]->recordMenus->sortbyDesc('volume');
             $recordTopWeightBench = array_slice($TopWeightBench->toArray(), 0, $dataUnit);

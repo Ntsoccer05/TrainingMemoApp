@@ -17,6 +17,7 @@
             :initialBodyWeight="selectedDateRecord ? selectedDateRecord.bodyWeight : null"
             :initialMemo="selectedDateRecord ? selectedDateRecord.weight_memo : null"
             :initialTagIds="selectedDateRecord ? selectedDateRecord.weight_tags.map((t) => t.id) : []"
+            :weightTags="weightTags"
             @saved="onSaved"
           />
         </div>
@@ -57,14 +58,34 @@
 
       <WeightRecordModal v-model="showModal" :record="selectedRecord" />
     </template>
+
+    <Modal
+      v-model="dispAlertModal"
+      title="権限エラー"
+      wrapper-class="modal-wrapper"
+      class="flex align-center"
+      @closing="toHome()"
+    >
+      <p>画面表示するにはログインしてください。</p>
+      <button
+        class="col-12 mt-5 text-center inline-block w-full rounded px-6 pb-2 pt-2.5 text-base font-medium uppercase leading-normal text-white shadow-[0_4px_9px_-4px_rgba(0,0,0,0.2)] transition duration-150 ease-in-out hover:shadow-[0_8px_9px_-4px_rgba(0,0,0,0.1),0_4px_18px_0_rgba(0,0,0,0.2)] focus:shadow-[0_8px_9px_-4px_rgba(0,0,0,0.1),0_4px_18px_0_rgba(0,0,0,0.2)] focus:outline-none focus:ring-0 active:shadow-[0_8px_9px_-4px_rgba(0,0,0,0.1),0_4px_18px_0_rgba(0,0,0,0.2)]"
+        style="background: linear-gradient(to right, #ee7724, #d8363a, #dd3675, #b44593)"
+        @click="toLogin"
+      >
+        ログイン画面へ
+      </button>
+    </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ComputedRef, onMounted, ref, Ref, watch } from "vue";
+import { useRouter } from "vue-router";
+import { useStore } from "vuex";
 import dayjs from "dayjs";
-import useGetWeightHistory from "../../composables/weight/useGetWeightHistory";
-import axios from "axios";
+import useGetWeightDashboard from "../../composables/weight/useGetWeightDashboard";
+import useGetLoginUser from "../../composables/certification/useGetLoginUser";
+import userSessionStorage from "../../utils/userSessionStorage";
 import LoadingSpinner from "../../components/common/LoadingSpinner.vue";
 import WeightChart from "../../components/weight/WeightChart.vue";
 import WeightTagStats from "../../components/weight/WeightTagStats.vue";
@@ -72,39 +93,41 @@ import WeightRecordForm from "../../components/weight/WeightRecordForm.vue";
 import WeightRecordModal from "../../components/weight/WeightRecordModal.vue";
 import WeightTargetSetting from "../../components/weight/WeightTargetSetting.vue";
 import WeightTagEditor from "../../components/weight/WeightTagEditor.vue";
-import { WeightRecord, TagStatistic } from "../../types/weight";
+import { WeightRecord } from "../../types/weight";
 import { setSeo } from "../../utils/setSeo";
-import useGetWeightTags from "../../composables/weight/useGetWeightTags";
 
 setSeo("weight");
+
+const router = useRouter();
+const store = useStore();
+
+const { getLoginUser, loginUser } = useGetLoginUser();
+const { getSessionLoginUser } = userSessionStorage();
+const dispModal: ComputedRef<boolean> = computed(() => store.getters.dispAlertModal);
+const dispAlertModal = ref<boolean>(false);
+
+const toHome = (): void => {
+  window.location.href = "/";
+};
+
+const toLogin = (): void => {
+  router.push("/login");
+};
 
 const today = dayjs().format("YYYY-MM-DD");
 
 const selectedDate: Ref<string> = ref(today);
-const selectedDateRecord: Ref<WeightRecord | null> = ref(null);
-
-const { weightTags, getWeightTags } = useGetWeightTags();
 const tagsVersion: Ref<number> = ref(0);
 
-const onTagsChanged = async (): Promise<void> => {
-  await getWeightTags();
-  tagsVersion.value++;
-};
-
-const fetchSelectedDateRecord = async (): Promise<void> => {
-  await axios
-    .get("/api/weight", { params: { from: selectedDate.value, to: selectedDate.value } })
-    .then((res) => {
-      selectedDateRecord.value = res.data.records.length > 0 ? res.data.records[0] : null;
-    })
-    .catch(() => {
-      selectedDateRecord.value = null;
-    });
-};
-
-watch(selectedDate, async () => {
-  await fetchSelectedDateRecord();
-});
+const {
+  weightRecords,
+  targetWeight,
+  targetWeightDate,
+  weightTags,
+  tagStats,
+  selectedDateRecord,
+  getWeightDashboard,
+} = useGetWeightDashboard();
 
 const periodOptions = [
   { label: "1ヶ月", months: 1 },
@@ -121,9 +144,6 @@ const getInitialSelectedMonths = (): number => {
 
 const selectedMonths: Ref<number> = ref(getInitialSelectedMonths());
 const isLoading: Ref<boolean> = ref(true);
-
-const { weightRecords, targetWeight, targetWeightDate, getWeightHistory } = useGetWeightHistory();
-const tagStats: Ref<TagStatistic[]> = ref([]);
 
 const showModal: Ref<boolean> = ref(false);
 const selectedRecord: Ref<WeightRecord | null> = ref(null);
@@ -145,41 +165,43 @@ const onTargetWeightUpdated = (value: { targetWeight: number; targetWeightDate: 
   targetWeightDate.value = value.targetWeightDate;
 };
 
-const fetchHistory = async (): Promise<void> => {
+const fetchDashboard = async (): Promise<void> => {
   const from = dayjs().subtract(selectedMonths.value, "month").format("YYYY-MM-DD");
   const to = dayjs().format("YYYY-MM-DD");
-  await getWeightHistory(from, to);
-};
-
-const fetchTagStats = async (): Promise<void> => {
-  await axios
-    .get("/api/weight/tagStats")
-    .then((res) => {
-      tagStats.value = res.data.stats;
-    })
-    .catch(() => {
-      tagStats.value = [];
-    });
+  await getWeightDashboard(from, to, selectedDate.value);
 };
 
 const changePeriod = async (months: number): Promise<void> => {
   selectedMonths.value = months;
   localStorage.setItem(PERIOD_STORAGE_KEY, String(months));
-  await fetchHistory();
+  await fetchDashboard();
 };
 
 const onSaved = async (): Promise<void> => {
-  await fetchHistory();
-  await fetchTagStats();
-  await fetchSelectedDateRecord();
+  await fetchDashboard();
 };
 
+const onTagsChanged = async (): Promise<void> => {
+  await fetchDashboard();
+  tagsVersion.value++;
+};
+
+watch(selectedDate, async () => {
+  await fetchDashboard();
+});
+
 onMounted(async () => {
+  const sessionLoginUser = getSessionLoginUser();
+  if (sessionLoginUser) {
+    loginUser.value = sessionLoginUser;
+  } else {
+    await getLoginUser();
+  }
+  if (dispModal.value) {
+    dispAlertModal.value = true;
+  }
   try {
-    await fetchHistory();
-    await fetchTagStats();
-    await fetchSelectedDateRecord();
-    await getWeightTags();
+    await fetchDashboard();
   } finally {
     isLoading.value = false;
   }

@@ -11,25 +11,18 @@ export declare type WeightRecord = {
     weight_tags: WeightTag[],
 };
 
-export declare type WeightHistoryResponse = {
-    status_code: number,
-    records: WeightRecord[],
-    target_weight: number | null,
-    target_weight_date: string | null,
-};
-
-export declare type WeightTagsResponse = {
-    status_code: number,
-    tags: WeightTag[],
-};
-
 export declare type TagStatistic = {
     tag: string,
     average_diff: number,
     sample_count: number,
 };
 
-export declare type TagStatisticsResponse = {
+export declare type WeightDashboardResponse = {
     status_code: number,
-    stats: TagStatistic[],
+    records: WeightRecord[],
+    target_weight: number | null,
+    target_weight_date: string | null,
+    tags: WeightTag[],
+    tag_stats: TagStatistic[],
+    selected_date_record: WeightRecord | null,
 };

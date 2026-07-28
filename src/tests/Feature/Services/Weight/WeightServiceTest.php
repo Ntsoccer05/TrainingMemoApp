@@ -315,4 +315,67 @@ class WeightServiceTest extends TestCase
         $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
         $service->deleteTag($user->id, $tag->id);
     }
+
+    public function test_get_dashboard_data_returns_records_tags_and_stats(): void
+    {
+        $user = User::factory()->create();
+        $user->target_weight = 60.0;
+        $user->target_weight_date = '2026-12-31';
+        $user->save();
+        $tag = WeightTag::create(['user_id' => $user->id, 'content' => '飲みすぎ']);
+        $day = RecordState::create(['user_id' => $user->id, 'recorded_at' => '2026-07-10', 'bodyWeight' => 65.0]);
+        $day->weightTags()->sync([$tag->id]);
+        RecordState::create(['user_id' => $user->id, 'recorded_at' => '2026-07-11', 'bodyWeight' => 65.5]);
+        $service = new WeightService();
+
+        $result = $service->getDashboardData(
+            $user->id,
+            Carbon::parse('2026-07-01')->startOfDay(),
+            Carbon::parse('2026-07-31')->endOfDay(),
+            Carbon::parse('2026-07-10')->startOfDay()
+        );
+
+        $this->assertCount(2, $result['records']);
+        $this->assertEquals(60.0, $result['target_weight']);
+        $this->assertEquals('2026-12-31', $result['target_weight_date']);
+        $this->assertCount(1, $result['tags']);
+        $this->assertCount(1, $result['tag_stats']);
+        $this->assertNotNull($result['selected_date_record']);
+        $this->assertEquals('2026-07-10', Carbon::parse($result['selected_date_record']->recorded_at)->toDateString());
+    }
+
+    public function test_get_dashboard_data_finds_selected_date_record_outside_history_range(): void
+    {
+        $user = User::factory()->create();
+        RecordState::create(['user_id' => $user->id, 'recorded_at' => '2026-01-15', 'bodyWeight' => 70.0]);
+        RecordState::create(['user_id' => $user->id, 'recorded_at' => '2026-07-10', 'bodyWeight' => 65.0]);
+        $service = new WeightService();
+
+        $result = $service->getDashboardData(
+            $user->id,
+            Carbon::parse('2026-07-01')->startOfDay(),
+            Carbon::parse('2026-07-31')->endOfDay(),
+            Carbon::parse('2026-01-15')->startOfDay()
+        );
+
+        $this->assertCount(1, $result['records']);
+        $this->assertNotNull($result['selected_date_record']);
+        $this->assertEquals(70.0, $result['selected_date_record']->bodyWeight);
+    }
+
+    public function test_get_dashboard_data_returns_null_selected_date_record_when_not_recorded(): void
+    {
+        $user = User::factory()->create();
+        $service = new WeightService();
+
+        $result = $service->getDashboardData(
+            $user->id,
+            Carbon::parse('2026-07-01')->startOfDay(),
+            Carbon::parse('2026-07-31')->endOfDay(),
+            Carbon::parse('2026-07-15')->startOfDay()
+        );
+
+        $this->assertCount(0, $result['records']);
+        $this->assertNull($result['selected_date_record']);
+    }
 }

@@ -167,4 +167,42 @@ class WeightService
         $tag = WeightTag::where('user_id', $userId)->findOrFail($tagId);
         $tag->delete();
     }
+
+    /**
+     * 体重管理ページの初期表示に必要なデータ(履歴・タグ一覧・タグ統計・選択日レコード)をまとめて返す。
+     * 選択日が履歴取得済みの範囲内であれば追加クエリなしでrecordsから探し、範囲外の場合のみ単日クエリを行う。
+     *
+     * @param int $userId
+     * @param Carbon $from
+     * @param Carbon $to
+     * @param Carbon $selectedDate
+     * @return array{records: Collection<int, RecordState>, target_weight: float|null, target_weight_date: string|null, tags: \Illuminate\Database\Eloquent\Collection<int, WeightTag>, tag_stats: array, selected_date_record: RecordState|null}
+     */
+    public function getDashboardData(int $userId, Carbon $from, Carbon $to, Carbon $selectedDate): array
+    {
+        $user = User::findOrFail($userId);
+        $records = $this->getWeightHistory($userId, $from, $to);
+
+        $selectedDateString = $selectedDate->toDateString();
+        $selectedDateRecord = $records->first(
+            fn ($record) => Carbon::parse($record->recorded_at)->toDateString() === $selectedDateString
+        );
+
+        if ($selectedDateRecord === null && ! $selectedDate->between($from, $to)) {
+            $selectedDateRecord = $this->getWeightHistory(
+                $userId,
+                $selectedDate->copy()->startOfDay(),
+                $selectedDate->copy()->endOfDay()
+            )->first();
+        }
+
+        return [
+            'records' => $records,
+            'target_weight' => $user->target_weight,
+            'target_weight_date' => $user->target_weight_date?->format('Y-m-d'),
+            'tags' => $this->getAllTags($userId),
+            'tag_stats' => $this->getTagStatistics($userId),
+            'selected_date_record' => $selectedDateRecord,
+        ];
+    }
 }

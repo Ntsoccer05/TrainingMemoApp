@@ -67,43 +67,49 @@ class WeightControllerTest extends TestCase
         $response->assertStatus(422);
     }
 
-    public function test_index_returns_weight_history_and_target_weight(): void
+    public function test_dashboard_returns_records_target_weight_tags_and_stats(): void
     {
         $user = $this->actingAsUser();
         $user->target_weight = 60.0;
+        $user->target_weight_date = '2026-12-31';
         $user->save();
-        RecordState::create(['user_id' => $user->id, 'recorded_at' => '2026-07-10', 'bodyWeight' => 65.0]);
-
-        $response = $this->getJson('/api/weight?from=2026-07-01&to=2026-07-31');
-
-        $response->assertStatus(200)
-            ->assertJsonPath('status_code', 200)
-            ->assertJsonPath('target_weight', 60.0)
-            ->assertJsonCount(1, 'records');
-    }
-
-    public function test_tags_returns_all_weight_tags(): void
-    {
-        $user = $this->actingAsUser();
-        WeightTag::create(['user_id' => $user->id, 'content' => '飲みすぎ']);
-        WeightTag::create(['user_id' => $user->id, 'content' => '生理']);
-
-        $response = $this->getJson('/api/weight/tags');
-
-        $response->assertStatus(200)->assertJsonCount(2, 'tags');
-    }
-
-    public function test_tag_stats_returns_statistics(): void
-    {
-        $user = $this->actingAsUser();
         $tag = WeightTag::create(['user_id' => $user->id, 'content' => '飲みすぎ']);
         $day = RecordState::create(['user_id' => $user->id, 'recorded_at' => '2026-07-10', 'bodyWeight' => 65.0]);
         $day->weightTags()->sync([$tag->id]);
         RecordState::create(['user_id' => $user->id, 'recorded_at' => '2026-07-11', 'bodyWeight' => 65.5]);
 
-        $response = $this->getJson('/api/weight/tagStats');
+        $response = $this->getJson('/api/weight/dashboard?from=2026-07-01&to=2026-07-31&selected_date=2026-07-10');
 
-        $response->assertStatus(200)->assertJsonCount(1, 'stats');
+        $response->assertStatus(200)
+            ->assertJsonPath('status_code', 200)
+            ->assertJsonPath('target_weight', 60.0)
+            ->assertJsonPath('target_weight_date', '2026-12-31')
+            ->assertJsonCount(2, 'records')
+            ->assertJsonCount(1, 'tags')
+            ->assertJsonCount(1, 'tag_stats')
+            ->assertJsonPath('selected_date_record.recorded_at', '2026-07-10');
+    }
+
+    public function test_dashboard_returns_null_selected_date_record_when_not_recorded(): void
+    {
+        $this->actingAsUser();
+
+        $response = $this->getJson('/api/weight/dashboard?from=2026-07-01&to=2026-07-31&selected_date=2026-07-15');
+
+        $response->assertStatus(200)
+            ->assertJsonCount(0, 'records')
+            ->assertJsonPath('selected_date_record', null);
+    }
+
+    public function test_dashboard_returns_empty_tags_and_stats_when_none_exist(): void
+    {
+        $this->actingAsUser();
+
+        $response = $this->getJson('/api/weight/dashboard');
+
+        $response->assertStatus(200)
+            ->assertJsonCount(0, 'tags')
+            ->assertJsonCount(0, 'tag_stats');
     }
 
     public function test_update_target_weight(): void
@@ -138,18 +144,6 @@ class WeightControllerTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('target_weight_date', null);
-    }
-
-    public function test_index_returns_target_weight_date(): void
-    {
-        $user = $this->actingAsUser();
-        $user->target_weight = 60.0;
-        $user->target_weight_date = '2026-12-31';
-        $user->save();
-
-        $response = $this->getJson('/api/weight?from=2026-07-01&to=2026-07-31');
-
-        $response->assertStatus(200)->assertJsonPath('target_weight_date', '2026-12-31');
     }
 
     public function test_store_tag_creates_a_new_tag(): void

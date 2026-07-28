@@ -35,26 +35,11 @@ class RecordMng extends Command
     public function handle(RecordState $recordState)
     {
         $now = Carbon::now();
-        $delete_flg = 0;
         $recordStates = $recordState->get();
         foreach($recordStates as $record){
-            if(isset($record->updated_at)){
-                $updateTime = new Carbon($record->updated_at);
-                // 他で定義しているものを使用する場合は'$this->'が必要
-                //記録開始して２年経ったら
-                if($now->diffInMonths($updateTime) >= $this->diff_month){
-                    $delete_flg = 1;
-                }
-            }else{
-                $createTime = new Carbon($record->created_at);
-                // 他で定義しているものを使用する場合は'$this->'が必要
-                //記録開始して２年経ったら
-                if($now->diffInMonths($createTime) >= $this->diff_month){
-                    $delete_flg = 1;
-                }
-            }
-            if($delete_flg === 1){
-                // ２年経過し重さを記録されていない記録は削除する
+            $baseTime = new Carbon($record->updated_at ?? $record->created_at);
+            //記録開始して２年経ったら削除する
+            if($now->diffInMonths($baseTime) >= $this->diff_month){
                 $record->delete();
             }
         }

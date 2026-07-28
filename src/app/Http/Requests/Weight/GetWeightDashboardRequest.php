@@ -5,7 +5,7 @@ namespace App\Http\Requests\Weight;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 
-class GetWeightHistoryRequest extends FormRequest
+class GetWeightDashboardRequest extends FormRequest
 {
     public function authorize()
     {
@@ -17,6 +17,7 @@ class GetWeightHistoryRequest extends FormRequest
         return [
             'from' => 'nullable|date_format:Y-m-d|required_with:to',
             'to' => 'nullable|date_format:Y-m-d|required_with:from|after_or_equal:from',
+            'selected_date' => 'nullable|date_format:Y-m-d',
         ];
     }
 
@@ -28,6 +29,7 @@ class GetWeightHistoryRequest extends FormRequest
             'from.date_format' => 'fromはYYYY-MM-DD形式で指定してください。',
             'to.date_format' => 'toはYYYY-MM-DD形式で指定してください。',
             'to.after_or_equal' => 'toはfrom以降の日付を指定してください。',
+            'selected_date.date_format' => 'selected_dateはYYYY-MM-DD形式で指定してください。',
         ];
     }
 
@@ -57,5 +59,19 @@ class GetWeightHistoryRequest extends FormRequest
         }
 
         return Carbon::now()->endOfDay();
+    }
+
+    /**
+     * 選択日を返す。省略時は今日とする。
+     *
+     * @return Carbon
+     */
+    public function resolvedSelectedDate(): Carbon
+    {
+        if ($this->filled('selected_date')) {
+            return Carbon::createFromFormat('Y-m-d', $this->input('selected_date'))->startOfDay();
+        }
+
+        return Carbon::now()->startOfDay();
     }
 }

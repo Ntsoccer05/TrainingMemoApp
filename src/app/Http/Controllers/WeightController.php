@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Weight\GetWeightHistoryRequest;
+use App\Http\Requests\Weight\GetWeightDashboardRequest;
 use App\Http\Requests\Weight\StoreWeightRecordRequest;
 use App\Http\Requests\Weight\StoreWeightTagRequest;
 use App\Http\Requests\Weight\UpdateTargetWeightRequest;
@@ -27,28 +27,24 @@ class WeightController extends Controller
         ], 200, [], JSON_PRESERVE_ZERO_FRACTION);
     }
 
-    public function index(GetWeightHistoryRequest $request, WeightService $weightService)
+    public function dashboard(GetWeightDashboardRequest $request, WeightService $weightService)
     {
-        $records = $weightService->getWeightHistory(
+        $data = $weightService->getDashboardData(
             auth()->id(),
             $request->resolvedFrom(),
-            $request->resolvedTo()
+            $request->resolvedTo(),
+            $request->resolvedSelectedDate()
         );
 
         return response()->json([
             'status_code' => 200,
-            'records' => $records,
-            'target_weight' => auth()->user()->target_weight,
-            'target_weight_date' => auth()->user()->target_weight_date?->format('Y-m-d'),
+            'records' => $data['records'],
+            'target_weight' => $data['target_weight'],
+            'target_weight_date' => $data['target_weight_date'],
+            'tags' => $data['tags'],
+            'tag_stats' => $data['tag_stats'],
+            'selected_date_record' => $data['selected_date_record'],
         ], 200, [], JSON_PRESERVE_ZERO_FRACTION);
-    }
-
-    public function tags(WeightService $weightService)
-    {
-        return response()->json([
-            'status_code' => 200,
-            'tags' => $weightService->getAllTags(auth()->id()),
-        ]);
     }
 
     public function storeTag(StoreWeightTagRequest $request, WeightService $weightService)
@@ -76,14 +72,6 @@ class WeightController extends Controller
             'status_code' => 200,
             'message' => 'タグを削除しました。',
         ]);
-    }
-
-    public function tagStats(WeightService $weightService)
-    {
-        return response()->json([
-            'status_code' => 200,
-            'stats' => $weightService->getTagStatistics(auth()->id()),
-        ], 200, [], JSON_PRESERVE_ZERO_FRACTION);
     }
 
     public function updateTargetWeight(UpdateTargetWeightRequest $request, WeightService $weightService)

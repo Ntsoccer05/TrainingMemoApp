@@ -13,7 +13,7 @@
       <label class="block text-sm font-medium mb-1">タグ</label>
       <div class="flex flex-wrap gap-2">
         <button
-          v-for="tag in weightTags"
+          v-for="tag in props.weightTags"
           :key="tag.id"
           type="button"
           class="px-2 py-1 rounded text-sm border"
@@ -56,22 +56,22 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, Ref } from "vue";
-import useGetWeightTags from "../../composables/weight/useGetWeightTags";
+import { ref, Ref } from "vue";
 import usePostWeightRecord from "../../composables/weight/usePostWeightRecord";
+import { WeightTag } from "../../types/weight";
 
 const props = defineProps<{
   recordedAt: string;
   initialBodyWeight?: number | null;
   initialMemo?: string | null;
   initialTagIds?: number[];
+  weightTags: WeightTag[];
 }>();
 
 const emits = defineEmits<{
   (e: "saved"): void;
 }>();
 
-const { weightTags, getWeightTags } = useGetWeightTags();
 const { isSaving, postWeightRecord } = usePostWeightRecord();
 
 const bodyWeightInput: Ref<string> = ref(
@@ -111,8 +111,4 @@ const submit = async () => {
   await postWeightRecord(props.recordedAt, bodyWeight, memoInput.value || null, selectedTagIds.value);
   emits("saved");
 };
-
-onMounted(async () => {
-  await getWeightTags();
-});
 </script>

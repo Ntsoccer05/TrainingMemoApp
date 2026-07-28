@@ -45,10 +45,8 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::post('/recordContent/create', [RecordContentController::class, 'create']);
     Route::post('/recordContent/delete', [RecordContentController::class, 'delete']);
     Route::get('/recordRanking/user', [RecordRankingController::class, 'index']);
-    Route::get('/weight', [WeightController::class, 'index']);
     Route::post('/weight', [WeightController::class, 'store']);
-    Route::get('/weight/tags', [WeightController::class, 'tags']);
-    Route::get('/weight/tagStats', [WeightController::class, 'tagStats']);
+    Route::get('/weight/dashboard', [WeightController::class, 'dashboard']);
     Route::post('/weight/targetWeight', [WeightController::class, 'updateTargetWeight']);
     Route::post('/weight/tags', [WeightController::class, 'storeTag']);
     Route::delete('/weight/tags/{id}', [WeightController::class, 'destroyTag']);
