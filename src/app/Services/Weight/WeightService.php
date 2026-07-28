@@ -104,16 +104,18 @@ class WeightService
     }
 
     /**
-     * ユーザーの目標体重を更新する。
+     * ユーザーの目標体重と期限日を更新する。
      *
      * @param int $userId
      * @param float $targetWeight
+     * @param string|null $targetWeightDate
      * @return User
      */
-    public function updateTargetWeight(int $userId, float $targetWeight): User
+    public function updateTargetWeight(int $userId, float $targetWeight, ?string $targetWeightDate = null): User
     {
         $user = User::findOrFail($userId);
         $user->target_weight = $targetWeight;
+        $user->target_weight_date = $targetWeightDate;
         $user->save();
 
         return $user;

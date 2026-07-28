@@ -4,50 +4,56 @@
 
     <LoadingSpinner v-if="isLoading" />
     <template v-else>
-      <div class="flex gap-2 mb-4">
-        <button
-          v-for="option in periodOptions"
-          :key="option.months"
-          class="px-3 py-1 border rounded text-sm"
-          :class="selectedMonths === option.months ? 'bg-blue-500 text-white' : 'bg-white'"
-          @click="changePeriod(option.months)"
-        >
-          {{ option.label }}
-        </button>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="border p-3 rounded">
+          <h3 class="font-semibold mb-2">体重を記録</h3>
+          <div class="mb-2 flex items-center gap-2">
+            <label class="text-sm font-medium whitespace-nowrap">日付</label>
+            <input type="date" v-model="selectedDate" class="border p-1" />
+          </div>
+          <WeightRecordForm
+            :key="`${selectedDate}-${tagsVersion}`"
+            :recordedAt="selectedDate"
+            :initialBodyWeight="selectedDateRecord ? selectedDateRecord.bodyWeight : null"
+            :initialMemo="selectedDateRecord ? selectedDateRecord.weight_memo : null"
+            :initialTagIds="selectedDateRecord ? selectedDateRecord.weight_tags.map((t) => t.id) : []"
+            @saved="onSaved"
+          />
+        </div>
+
+        <div>
+          <WeightTargetSetting
+            :targetWeight="targetWeight"
+            :targetWeightDate="targetWeightDate"
+            :latestBodyWeight="latestBodyWeight"
+            @updated="onTargetWeightUpdated"
+          />
+        </div>
       </div>
 
-      <div class="mb-4">
-        <label class="block text-sm font-medium mb-1">日付</label>
-        <input type="date" v-model="selectedDate" class="border p-1" />
+      <div class="mt-6">
+        <div class="flex gap-2 mb-4">
+          <button
+            v-for="option in periodOptions"
+            :key="option.months"
+            class="px-3 py-1 border rounded text-sm"
+            :class="selectedMonths === option.months ? 'bg-teal-600 text-white' : 'bg-white'"
+            @click="changePeriod(option.months)"
+          >
+            {{ option.label }}
+          </button>
+        </div>
+
+        <WeightChart
+          :records="weightRecords"
+          :targetWeight="targetWeight"
+          @pointClick="openRecordModal"
+        />
       </div>
-
-      <WeightTargetSetting
-        :targetWeight="targetWeight"
-        :latestBodyWeight="latestBodyWeight"
-        @updated="onTargetWeightUpdated"
-      />
-
-      <WeightChart
-        :records="weightRecords"
-        :targetWeight="targetWeight"
-        @pointClick="openRecordModal"
-      />
 
       <WeightTagStats :stats="tagStats" />
 
       <WeightTagEditor :tags="weightTags" @changed="onTagsChanged" />
-
-      <div class="mt-6">
-        <h3 class="font-semibold mb-2">{{ formTitle }}</h3>
-        <WeightRecordForm
-          :key="`${selectedDate}-${tagsVersion}`"
-          :recordedAt="selectedDate"
-          :initialBodyWeight="selectedDateRecord ? selectedDateRecord.bodyWeight : null"
-          :initialMemo="selectedDateRecord ? selectedDateRecord.weight_memo : null"
-          :initialTagIds="selectedDateRecord ? selectedDateRecord.weight_tags.map((t) => t.id) : []"
-          @saved="onSaved"
-        />
-      </div>
 
       <WeightRecordModal v-model="showModal" :record="selectedRecord" />
     </template>
@@ -85,10 +91,6 @@ const onTagsChanged = async (): Promise<void> => {
   tagsVersion.value++;
 };
 
-const formTitle: ComputedRef<string> = computed(() => {
-  return selectedDate.value === today ? "今日の体重を記録" : `${selectedDate.value}の体重を記録`;
-});
-
 const fetchSelectedDateRecord = async (): Promise<void> => {
   await axios
     .get("/api/weight", { params: { from: selectedDate.value, to: selectedDate.value } })
@@ -109,10 +111,18 @@ const periodOptions = [
   { label: "3ヶ月", months: 3 },
   { label: "6ヶ月", months: 6 },
 ];
-const selectedMonths: Ref<number> = ref(1);
+const PERIOD_STORAGE_KEY = "weightManagement.selectedMonths";
+
+const getInitialSelectedMonths = (): number => {
+  const stored = localStorage.getItem(PERIOD_STORAGE_KEY);
+  const parsed = stored ? Number(stored) : NaN;
+  return [1, 3, 6].includes(parsed) ? parsed : 1;
+};
+
+const selectedMonths: Ref<number> = ref(getInitialSelectedMonths());
 const isLoading: Ref<boolean> = ref(true);
 
-const { weightRecords, targetWeight, getWeightHistory } = useGetWeightHistory();
+const { weightRecords, targetWeight, targetWeightDate, getWeightHistory } = useGetWeightHistory();
 const tagStats: Ref<TagStatistic[]> = ref([]);
 
 const showModal: Ref<boolean> = ref(false);
@@ -130,8 +140,9 @@ const latestBodyWeight: ComputedRef<number | null> = computed(() => {
   return weightRecords.value[weightRecords.value.length - 1].bodyWeight;
 });
 
-const onTargetWeightUpdated = (value: number): void => {
-  targetWeight.value = value;
+const onTargetWeightUpdated = (value: { targetWeight: number; targetWeightDate: string | null }): void => {
+  targetWeight.value = value.targetWeight;
+  targetWeightDate.value = value.targetWeightDate;
 };
 
 const fetchHistory = async (): Promise<void> => {
@@ -153,6 +164,7 @@ const fetchTagStats = async (): Promise<void> => {
 
 const changePeriod = async (months: number): Promise<void> => {
   selectedMonths.value = months;
+  localStorage.setItem(PERIOD_STORAGE_KEY, String(months));
   await fetchHistory();
 };
 

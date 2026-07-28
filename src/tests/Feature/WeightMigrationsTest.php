@@ -38,4 +38,9 @@ class WeightMigrationsTest extends TestCase
     {
         $this->assertTrue(Schema::hasColumn('weight_tags', 'user_id'));
     }
+
+    public function test_users_table_has_target_weight_date_column(): void
+    {
+        $this->assertTrue(Schema::hasColumn('users', 'target_weight_date'));
+    }
 }

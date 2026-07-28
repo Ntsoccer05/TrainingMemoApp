@@ -39,6 +39,7 @@ class WeightController extends Controller
             'status_code' => 200,
             'records' => $records,
             'target_weight' => auth()->user()->target_weight,
+            'target_weight_date' => auth()->user()->target_weight_date?->format('Y-m-d'),
         ], 200, [], JSON_PRESERVE_ZERO_FRACTION);
     }
 
@@ -87,11 +88,16 @@ class WeightController extends Controller
 
     public function updateTargetWeight(UpdateTargetWeightRequest $request, WeightService $weightService)
     {
-        $user = $weightService->updateTargetWeight(auth()->id(), $request->input('target_weight'));
+        $user = $weightService->updateTargetWeight(
+            auth()->id(),
+            $request->input('target_weight'),
+            $request->input('target_weight_date')
+        );
 
         return response()->json([
             'status_code' => 200,
             'target_weight' => $user->target_weight,
+            'target_weight_date' => $user->target_weight_date?->format('Y-m-d'),
         ], 200, [], JSON_PRESERVE_ZERO_FRACTION);
     }
 }

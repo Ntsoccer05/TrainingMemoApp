@@ -15,6 +15,7 @@ export declare type WeightHistoryResponse = {
     status_code: number,
     records: WeightRecord[],
     target_weight: number | null,
+    target_weight_date: string | null,
 };
 
 export declare type WeightTagsResponse = {

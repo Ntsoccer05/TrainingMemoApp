@@ -29,7 +29,8 @@ class User extends Authenticatable implements FilamentUser
         'email',
         'password',
         'is_admin',
-        'target_weight'
+        'target_weight',
+        'target_weight_date'
     ];
 
     /**
@@ -49,6 +50,7 @@ class User extends Authenticatable implements FilamentUser
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'target_weight_date' => 'date',
     ];
     public function canAccessFilament(): bool
     {

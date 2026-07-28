@@ -15,6 +15,7 @@ class UpdateTargetWeightRequest extends FormRequest
     {
         return [
             'target_weight' => 'required|numeric|min:0|max:999.9',
+            'target_weight_date' => 'nullable|date_format:Y-m-d',
         ];
     }
 }

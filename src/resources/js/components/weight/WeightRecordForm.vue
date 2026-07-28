@@ -1,10 +1,10 @@
 <template>
-  <div class="border p-3 rounded">
-    <div class="mb-2">
-      <label class="block text-sm font-medium mb-1">体重(kg)</label>
+  <div>
+    <div class="mb-2 flex items-center gap-2">
+      <label class="text-sm font-medium whitespace-nowrap">体重(kg)</label>
       <input
         type="text"
-        class="border w-full p-1"
+        class="border p-1 w-32"
         placeholder="例: 65.5"
         v-model="bodyWeightInput"
       />
@@ -12,19 +12,37 @@
     <div class="mb-2">
       <label class="block text-sm font-medium mb-1">タグ</label>
       <div class="flex flex-wrap gap-2">
-        <label
+        <button
           v-for="tag in weightTags"
           :key="tag.id"
-          class="flex items-center gap-1 text-sm border rounded px-2 py-1 cursor-pointer"
+          type="button"
+          class="px-2 py-1 rounded text-sm border"
+          :class="
+            selectedTagIds.includes(tag.id)
+              ? 'bg-teal-600 text-white border-teal-600'
+              : 'bg-gray-100 text-gray-700 border-gray-300'
+          "
+          :aria-pressed="selectedTagIds.includes(tag.id)"
+          @click="toggleTag(tag.id)"
         >
-          <input type="checkbox" :value="tag.id" v-model="selectedTagIds" />
           {{ tag.content }}
-        </label>
+        </button>
       </div>
     </div>
     <div class="mb-2">
-      <label class="block text-sm font-medium mb-1">メモ</label>
-      <textarea class="border w-full p-1" rows="3" v-model="memoInput"></textarea>
+      <button
+        type="button"
+        class="text-sm font-medium text-gray-700 flex items-center gap-1"
+        @click="toggleMemo"
+      >
+        メモ{{ memoInput ? "(入力あり)" : "" }} {{ isMemoExpanded ? "▲" : "▼" }}
+      </button>
+      <textarea
+        v-if="isMemoExpanded"
+        class="border w-full p-1 mt-1"
+        rows="3"
+        v-model="memoInput"
+      ></textarea>
     </div>
     <button
       type="button"
@@ -61,6 +79,32 @@ const bodyWeightInput: Ref<string> = ref(
 );
 const memoInput: Ref<string> = ref(props.initialMemo ?? "");
 const selectedTagIds: Ref<number[]> = ref(props.initialTagIds ? [...props.initialTagIds] : []);
+
+const MEMO_EXPANDED_STORAGE_KEY = "weightRecordForm.memoExpanded";
+
+const getInitialMemoExpanded = (): boolean => {
+  const stored = localStorage.getItem(MEMO_EXPANDED_STORAGE_KEY);
+  if (stored !== null) {
+    return stored === "true";
+  }
+  return window.innerWidth >= 768;
+};
+
+const isMemoExpanded: Ref<boolean> = ref(getInitialMemoExpanded());
+
+const toggleMemo = (): void => {
+  isMemoExpanded.value = !isMemoExpanded.value;
+  localStorage.setItem(MEMO_EXPANDED_STORAGE_KEY, String(isMemoExpanded.value));
+};
+
+const toggleTag = (tagId: number): void => {
+  const index = selectedTagIds.value.indexOf(tagId);
+  if (index === -1) {
+    selectedTagIds.value.push(tagId);
+  } else {
+    selectedTagIds.value.splice(index, 1);
+  }
+};
 
 const submit = async () => {
   const bodyWeight = bodyWeightInput.value !== "" ? parseFloat(bodyWeightInput.value) : null;

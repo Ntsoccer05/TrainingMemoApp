@@ -201,6 +201,27 @@ class WeightServiceTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $user->id, 'target_weight' => 60.0]);
     }
 
+    public function test_update_target_weight_sets_users_target_weight_date(): void
+    {
+        $user = User::factory()->create();
+        $service = new WeightService();
+
+        $result = $service->updateTargetWeight($user->id, 60.0, '2026-12-31');
+
+        $this->assertEquals('2026-12-31', $result->target_weight_date->format('Y-m-d'));
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'target_weight_date' => '2026-12-31']);
+    }
+
+    public function test_update_target_weight_allows_null_target_weight_date(): void
+    {
+        $user = User::factory()->create();
+        $service = new WeightService();
+
+        $result = $service->updateTargetWeight($user->id, 60.0, null);
+
+        $this->assertNull($result->target_weight_date);
+    }
+
     public function test_get_all_tags_returns_only_the_users_own_tags(): void
     {
         $user = User::factory()->create();

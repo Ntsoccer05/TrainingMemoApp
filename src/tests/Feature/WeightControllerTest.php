@@ -116,6 +116,42 @@ class WeightControllerTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $user->id, 'target_weight' => 58.0]);
     }
 
+    public function test_update_target_weight_saves_target_weight_date(): void
+    {
+        $user = $this->actingAsUser();
+
+        $response = $this->postJson('/api/weight/targetWeight', [
+            'target_weight' => 58.0,
+            'target_weight_date' => '2026-12-31',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('target_weight_date', '2026-12-31');
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'target_weight_date' => '2026-12-31']);
+    }
+
+    public function test_update_target_weight_allows_omitting_target_weight_date(): void
+    {
+        $this->actingAsUser();
+
+        $response = $this->postJson('/api/weight/targetWeight', ['target_weight' => 58.0]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('target_weight_date', null);
+    }
+
+    public function test_index_returns_target_weight_date(): void
+    {
+        $user = $this->actingAsUser();
+        $user->target_weight = 60.0;
+        $user->target_weight_date = '2026-12-31';
+        $user->save();
+
+        $response = $this->getJson('/api/weight?from=2026-07-01&to=2026-07-31');
+
+        $response->assertStatus(200)->assertJsonPath('target_weight_date', '2026-12-31');
+    }
+
     public function test_store_tag_creates_a_new_tag(): void
     {
         $this->actingAsUser();
