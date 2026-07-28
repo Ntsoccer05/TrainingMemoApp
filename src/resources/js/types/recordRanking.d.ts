@@ -1,3 +1,8 @@
+export declare type CategorySummary = {
+    id: number;
+    content: string;
+};
+
 export declare type dispRecordContents ={
     category?: Category,
     emptyData?: number,

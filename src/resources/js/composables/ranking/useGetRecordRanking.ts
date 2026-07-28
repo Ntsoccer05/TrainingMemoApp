@@ -1,12 +1,13 @@
-import { reactive, ref } from "vue";
+import { ref } from "vue";
 import axios from "axios";
 import useNotLoginedRedirect from "../certification/useNotLoginedRedirect";
-import { dispRecordContents } from "../../types/recordRanking";
+import { CategorySummary, dispRecordContents } from "../../types/recordRanking";
+import { extractCategorySummaries } from "../../utils/recordRanking";
 
 export default function useGetRecords() {
     const rankingContents = ref<dispRecordContents>([]);
     const compGetData = ref<boolean>(false);
-    const categoryContents = ref<string[]>([]);
+    const categoryContents = ref<CategorySummary[]>([]);
 
     const getRecords = async (user_id: number) => {
         await axios
@@ -19,22 +20,7 @@ export default function useGetRecords() {
             })
             .then((res) => {
                 rankingContents.value = res.data.dispContents;
-                for (let i = 0; i < rankingContents.value.length; i++) {
-                    if (i > 0) {
-                        if (
-                            rankingContents.value[i - 1].category.id !==
-                            rankingContents.value[i].category.id
-                        ) {
-                            categoryContents.value.push(
-                                rankingContents.value[i].category.content
-                            );
-                        }
-                    } else {
-                        categoryContents.value.push(
-                            rankingContents.value[i].category.content
-                        );
-                    }
-                }
+                categoryContents.value = extractCategorySummaries(rankingContents.value);
                 compGetData.value = true;
             })
             .catch((err) => {

@@ -96,6 +96,7 @@ docker exec trainingmemo-app-1 php artisan test tests/Feature/SomeTest.php
 - **管理パネル**: Filament 管理パネルは `/admin`
 - **テスト**: `tests/Feature`・`tests/Unit` にサンプルのみ。新規機能は `test-driven-development` スキルに従いテストを先に書く
 - **Lint/型チェック**: package.json に lint/typecheck スクリプトは未整備(将来追加を検討)
+- **OPcache preload(ローカルAPI高速化)**: Windows上のDocker Desktopは`./src`バインドマウント越しのファイルI/Oが遅く、対策として`docker/php/php.ini`で`opcache.preload=/var/www/html/preload.php`を設定している。preload対象は`src/preload-manifest.txt`に列挙した実測済みファイルのみ(vendor全体を対象にすると一部ファイルでpreloadがクラッシュするため)。**`composer install`/`composer update`でvendorの依存関係を変更した場合は、`src/preload.php`冒頭のコメントに記載した手順で`src/preload-manifest.txt`を再生成し、`docker-compose restart app`でOPcacheを再読み込みすること。** 再生成を忘れても致命的ではない(新しく増えたvendorファイルは通常通り毎リクエスト検証されるだけ)が、速度改善の恩恵を受けられない。
 
 ## 開発ワークフロー
 

@@ -57,25 +57,17 @@ onMounted(async () => {
 
 <template>
   <div>
-    <div class="mx-auto md:w-6/12 w-11/12 mb-5 font-bold md:text-left">
+    <div class="max-w-3xl mx-auto w-11/12 mb-5 font-bold md:text-left">
       <button
-        class="mx-auto mt-10 font-bold md:text-center bg-red-500 text-white w-28 h-8 rounded-md ml-5"
+        class="mx-auto mt-10 md:text-center border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md px-4 py-1.5 text-sm font-medium ml-5"
         @click="toBeforeScreen"
       >
         前画面へ戻る
       </button>
     </div>
-    <p class="mx-auto mt-5 md:w-6/12 w-11/12 mb-5 font-bold md:text-center">
+    <p class="mx-auto mt-5 max-w-3xl w-11/12 mb-5 font-bold md:text-center">
       メニュー別の最高重量、最高ボリュームを表示しています。
     </p>
-    <div class="text-right mx-auto w-11/12 md:w-6/12">
-      <i class="fa-solid fa-minus text-red-500 text-xl"></i>
-      <span class="text-lg">：部位</span>
-    </div>
-    <div class="text-right mx-auto w-11/12 md:w-6/12">
-      <i class="fa-solid fa-minus text-blue-500 text-xl"></i>
-      <span class="text-lg">：種目</span>
-    </div>
     <template v-if="compGetData">
       <userRecordRankingTable
         :ranking_contents="rankingContents"

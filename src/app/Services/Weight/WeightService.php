@@ -68,26 +68,33 @@ class WeightService
     public function getTagStatistics(int $userId): array
     {
         $tags = WeightTag::where('user_id', $userId)->get();
+
+        if ($tags->isEmpty()) {
+            return [];
+        }
+
+        // 体重記録とタグの紐付けを1回のクエリでまとめて取得する(タグ×記録件数ぶんの個別クエリを避ける)。
+        $records = RecordState::where('user_id', $userId)
+            ->whereNotNull('bodyWeight')
+            ->with('weightTags:id')
+            ->get(['id', 'recorded_at', 'bodyWeight']);
+
+        // 「翌日の体重」をクエリなしで引けるように、日付をキーにしたマップを作る。
+        $weightByDate = $records->mapWithKeys(function ($record) {
+            return [Carbon::parse($record->recorded_at)->toDateString() => $record->bodyWeight];
+        });
+
         $stats = [];
-
         foreach ($tags as $tag) {
-            $records = RecordState::where('record_states.user_id', $userId)
-                ->whereNotNull('bodyWeight')
-                ->whereHas('weightTags', function ($query) use ($tag) {
-                    $query->where('weight_tags.id', $tag->id);
-                })
-                ->get(['id', 'recorded_at', 'bodyWeight']);
-
             $diffs = [];
             foreach ($records as $record) {
-                $nextDay = Carbon::parse($record->recorded_at)->addDay()->toDateString();
-                $nextRecord = RecordState::where('user_id', $userId)
-                    ->whereDate('recorded_at', $nextDay)
-                    ->whereNotNull('bodyWeight')
-                    ->first();
+                if (! $record->weightTags->contains('id', $tag->id)) {
+                    continue;
+                }
 
-                if ($nextRecord) {
-                    $diffs[] = $nextRecord->bodyWeight - $record->bodyWeight;
+                $nextDay = Carbon::parse($record->recorded_at)->addDay()->toDateString();
+                if ($weightByDate->has($nextDay)) {
+                    $diffs[] = $weightByDate->get($nextDay) - $record->bodyWeight;
                 }
             }
 

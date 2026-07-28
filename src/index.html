@@ -42,16 +42,27 @@
   <link href="https://fonts.bunny.net/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://use.fontawesome.com/releases/v6.2.0/css/all.css" rel="stylesheet">
   <link rel="shortcut icon" type="image/x-icon" href="https://training-memo.s3.ap-northeast-1.amazonaws.com/icon.ico">
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-KK04BK4PT8"></script>
+  <!-- Google tag (gtag.js): ローカルホスト(localhost/127.0.0.1)運用時は計測しない -->
   <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
+    (function () {
+      var host = location.hostname;
+      if (host === 'localhost' || host === '127.0.0.1') {
+        return;
+      }
 
-    // SPAのためページ遷移はvue-router側(router/index.ts)でpage_viewを送信する。
-    // ここでの自動送信を無効化しないと初回アクセス時にPVが二重計上される。
-    gtag('config', 'G-KK04BK4PT8', { send_page_view: false });
+      var gtagScript = document.createElement('script');
+      gtagScript.async = true;
+      gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-KK04BK4PT8';
+      document.head.appendChild(gtagScript);
+
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function () { dataLayer.push(arguments); };
+      window.gtag('js', new Date());
+
+      // SPAのためページ遷移はvue-router側(router/index.ts)でpage_viewを送信する。
+      // ここでの自動送信を無効化しないと初回アクセス時にPVが二重計上される。
+      window.gtag('config', 'G-KK04BK4PT8', { send_page_view: false });
+    })();
   </script>
 </head>
 
