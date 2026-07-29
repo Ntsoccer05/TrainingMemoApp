@@ -338,6 +338,7 @@ import axios from "axios";
 import { useStore } from "vuex";
 import { HistoryRecord, TgtRecordContent } from "../../types/record";
 import userSessionStorage from "../../utils/userSessionStorage";
+import resolveMemoAdjustIndexes from "../../utils/resolveMemoAdjustIndexes";
 
 // エンターキーを押すと次の要素入力可
 // function keydown(e) {
@@ -485,6 +486,16 @@ watch(
         tempObj.value[i] = { set: Number(maxBeforeLength.value) };
         contents.value = [...contents.value, tempObj.value[i]];
       }
+      // 初回レンダリング時はbeforeMemo/thisMemoがまだDOMにマウントされておらず、
+      // inputBeforeMemo経由のadjustHeight呼び出しが空振りするため、
+      // マウント確定後のこのタイミングで前回メモの高さを改めて調整する。
+      nextTick(() => {
+        resolveMemoAdjustIndexes(contents.value).forEach((index) => {
+          if (beforeMemo.value?.[index] && thisMemo.value?.[index]) {
+            adjustHeight(beforeMemo.value[index], thisMemo.value[index]);
+          }
+        });
+      });
     }
   },
   { immediate: true }
