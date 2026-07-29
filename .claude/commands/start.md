@@ -40,8 +40,8 @@ try { (Invoke-WebRequest -Uri "http://localhost:5174/" -UseBasicParsing -Timeout
 
 **前提となる`.env`設定**: `src/.env`に以下が設定されていることを確認する(なければ追加し、Vite起動後に`docker exec trainingmemoapp-app-1 php artisan config:clear`を実行する)。
 ```
-VITE_API_BASE_URL=http://localhost:1001
-SANCTUM_STATEFUL_DOMAINS=localhost:1001,localhost:5174
+VITE_API_BASE_URL=http://localhost:5173
+SANCTUM_STATEFUL_DOMAINS=localhost:5173,localhost:5174
 ```
 - `VITE_API_BASE_URL`: Vite dev serverのポートとAPI(Nginx経由、`.env`の`WEB_PORT`)のポートが異なるため、`bootstrap.ts`でaxiosの`baseURL`をこの値で上書きしている(未設定時は本番同様に相対パスのままで無害)。
 - `SANCTUM_STATEFUL_DOMAINS`: 実際にVite dev serverが使っているポートを含めること。上記確認で5173ではなく5174(またはそれ以外)が応答した場合は、この値にそのポートを追記して`php artisan config:clear`を実行する。

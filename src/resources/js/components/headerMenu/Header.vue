@@ -194,13 +194,6 @@
                   >
                 </li>
               </template>
-              <li class="border-b md:border-none">
-                <a
-                  class="block px-8 py-2 my-4 hover:bg-gray-600 rounded cursor-pointer"
-                  @click.native="logout"
-                  >ログアウト</a
-                >
-              </li>
             </template>
             <template v-else-if="isLogined === false && isloaded">
               <li class="border-b md:border-none">
@@ -225,6 +218,15 @@
                   class="block px-8 py-2 my-4 hover:bg-gray-600 rounded cursor-pointer"
                   :class="{ 'bg-gray-600 font-semibold': route.name === 'Inquiry' }"
                   >お問い合わせ</router-link
+                >
+              </li>
+            </template>
+            <template v-if="isLogined === true && isloaded">
+              <li class="border-b md:border-none">
+                <a
+                  class="block px-8 py-2 my-4 hover:bg-gray-600 rounded cursor-pointer"
+                  @click.native="logout"
+                  >ログアウト</a
                 >
               </li>
             </template>

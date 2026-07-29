@@ -6,7 +6,7 @@ export default function userSessionStorage(
     recordStateId = null
 ) {
     const menuContentKey = `menuContent_${categoryId}_${menuId}`;
-    const fillBeforeRecordKey = `secondRecord_${categoryId}_${menuId}_${recordStateId}`;
+    const recordDataKey = `recordData_${categoryId}_${menuId}_${recordStateId}`;
     const historyRecordsKey = `historyRecords_${categoryId}_${menuId}_${recordStateId}`;
     // 日付(recordStateId)を問わず、部位+種目単位で保持する
     const complementContentsKey = `complementContents_${categoryId}_${menuId}`;
@@ -18,15 +18,28 @@ export default function userSessionStorage(
     const removeMenuContentSession = () =>
         sessionStorage.removeItem(menuContentKey);
 
-    const getFillBeforeRecordSession = () =>
-        JSON.parse(sessionStorage.getItem(fillBeforeRecordKey));
-    const setFillBeforeRecordSession = (bodyWeight, record) =>
+    // 今回の記録＋前回の記録をまとめてキャッシュする(同一種目・同一日への再訪問時に再フェッチを避ける)
+    const getRecordDataSession = () =>
+        JSON.parse(sessionStorage.getItem(recordDataKey));
+    const setRecordDataSession = (
+        tgtRecords,
+        hasTgtRecord,
+        previousRecords,
+        previousRecordState,
+        hasPreviousRecord
+    ) =>
         sessionStorage.setItem(
-            fillBeforeRecordKey,
-            JSON.stringify({ bodyWeight, record })
+            recordDataKey,
+            JSON.stringify({
+                tgtRecords,
+                hasTgtRecord,
+                previousRecords,
+                previousRecordState,
+                hasPreviousRecord,
+            })
         );
-    const removeFillBeforeRecordSession = () =>
-        sessionStorage.removeItem(fillBeforeRecordKey);
+    const removeRecordDataSession = () =>
+        sessionStorage.removeItem(recordDataKey);
 
     const getHistoryRecordSession = () =>
         JSON.parse(sessionStorage.getItem(historyRecordsKey));
@@ -52,9 +65,9 @@ export default function userSessionStorage(
         setMenuContentSession,
         getMenuContentSession,
         removeMenuContentSession,
-        getFillBeforeRecordSession,
-        setFillBeforeRecordSession,
-        removeFillBeforeRecordSession,
+        getRecordDataSession,
+        setRecordDataSession,
+        removeRecordDataSession,
         getHistoryRecordSession,
         setHistoryRecordSession,
         removeHistoryRecordSession,

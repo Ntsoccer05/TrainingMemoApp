@@ -52,6 +52,9 @@
     >
       保存する
     </button>
+    <p v-if="hasError" class="text-sm text-red-600 mt-2">
+      保存に失敗しました。時間をおいて再度お試しください。
+    </p>
   </div>
 </template>
 
@@ -72,7 +75,7 @@ const emits = defineEmits<{
   (e: "saved"): void;
 }>();
 
-const { isSaving, postWeightRecord } = usePostWeightRecord();
+const { isSaving, hasError, postWeightRecord } = usePostWeightRecord();
 
 const bodyWeightInput: Ref<string> = ref(
   props.initialBodyWeight != null ? props.initialBodyWeight.toString() : ""
@@ -109,6 +112,8 @@ const toggleTag = (tagId: number): void => {
 const submit = async () => {
   const bodyWeight = bodyWeightInput.value !== "" ? parseFloat(bodyWeightInput.value) : null;
   await postWeightRecord(props.recordedAt, bodyWeight, memoInput.value || null, selectedTagIds.value);
-  emits("saved");
+  if (!hasError.value) {
+    emits("saved");
+  }
 };
 </script>

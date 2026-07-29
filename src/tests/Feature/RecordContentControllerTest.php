@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\Menu;
+use App\Models\RecordContent;
 use App\Models\RecordMenu;
 use App\Models\RecordState;
 use App\Models\User;
@@ -102,5 +103,58 @@ class RecordContentControllerTest extends TestCase
         $this->assertSame($recordState->id, $records[0]['recorded_at']['record_id']);
         $this->assertSame($menu->id, $records[0]['menu'][0]['menu_id']);
         $this->assertSame($category->id, $records[0]['category'][0]['category_id']);
+    }
+
+    public function test_record_screen_branch_returns_tgt_and_previous_records()
+    {
+        $user = User::factory()->create();
+        $category = Category::create(['user_id' => $user->id, 'content' => '胸']);
+        $menu = Menu::create(['user_id' => $user->id, 'category_id' => $category->id, 'content' => 'ベンチプレス', 'oneSide' => 0]);
+
+        $previousRecordState = RecordState::create(['user_id' => $user->id, 'recorded_at' => '2026-06-08', 'bodyWeight' => 68]);
+        $previousRecordMenu = RecordMenu::forceCreate(['user_id' => $user->id, 'category_id' => $category->id, 'menu_id' => $menu->id, 'record_state_id' => $previousRecordState->id, 'recorded_at' => '2026-06-08']);
+        $previousContent = new RecordContent(['record_menu_id' => $previousRecordMenu->id, 'weight' => 55, 'rep' => 10, 'set' => 1]);
+        $previousContent->user_id = $user->id;
+        $previousContent->save();
+
+        $todayRecordState = RecordState::create(['user_id' => $user->id, 'recorded_at' => '2026-06-10']);
+        $todayRecordMenu = RecordMenu::forceCreate(['user_id' => $user->id, 'category_id' => $category->id, 'menu_id' => $menu->id, 'record_state_id' => $todayRecordState->id, 'recorded_at' => '2026-06-10']);
+        $todayContent = new RecordContent(['record_menu_id' => $todayRecordMenu->id, 'weight' => 60, 'rep' => 10, 'set' => 1]);
+        $todayContent->user_id = $user->id;
+        $todayContent->save();
+
+        $response = $this->actingAs($user)->getJson(
+            "/api/recordContent?user_id={$user->id}&category_id={$category->id}&menu_id={$menu->id}&record_state_id={$todayRecordState->id}&recorded_at=2026-06-10"
+        );
+
+        $response->assertStatus(200);
+        $body = $response->json();
+        $this->assertCount(1, $body['tgtRecords']);
+        $this->assertEquals(60, $body['tgtRecords'][0]['weight']);
+        $this->assertSame($previousRecordState->id, $body['previousRecordState']['id']);
+        $this->assertCount(1, $body['previousRecords']);
+        $this->assertEquals(55, $body['previousRecords'][0]['weight']);
+    }
+
+    public function test_record_screen_branch_returns_previous_record_when_no_record_exists_for_today()
+    {
+        $user = User::factory()->create();
+        $category = Category::create(['user_id' => $user->id, 'content' => '胸']);
+        $menu = Menu::create(['user_id' => $user->id, 'category_id' => $category->id, 'content' => 'ベンチプレス', 'oneSide' => 0]);
+
+        $previousRecordState = RecordState::create(['user_id' => $user->id, 'recorded_at' => '2026-06-08', 'bodyWeight' => 68]);
+        RecordMenu::forceCreate(['user_id' => $user->id, 'category_id' => $category->id, 'menu_id' => $menu->id, 'record_state_id' => $previousRecordState->id, 'recorded_at' => '2026-06-08']);
+
+        $todayRecordState = RecordState::create(['user_id' => $user->id, 'recorded_at' => '2026-06-10']);
+        // 今日分のRecordMenuはまだ作らない
+
+        $response = $this->actingAs($user)->getJson(
+            "/api/recordContent?user_id={$user->id}&category_id={$category->id}&menu_id={$menu->id}&record_state_id={$todayRecordState->id}&recorded_at=2026-06-10"
+        );
+
+        $response->assertStatus(200);
+        $body = $response->json();
+        $this->assertNull($body['tgtRecords']);
+        $this->assertSame($previousRecordState->id, $body['previousRecordState']['id']);
     }
 }

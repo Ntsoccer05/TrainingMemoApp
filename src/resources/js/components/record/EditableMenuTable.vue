@@ -134,6 +134,7 @@ import axios from "axios";
 import userSessionStorage from "../../utils/userSessionStorage";
 import session from "../../utils/sessionStorageUtil";
 import fetchMenusOnce from "../../utils/menusRequestDedup";
+import resolveRecordStateId from "../../utils/resolveRecordStateId";
 
 const props = defineProps<{
   editable: boolean;
@@ -170,27 +171,15 @@ const { getLatestRecordState, latestRecord } = useGetRecordState();
 //トレーニング記録画面に遷移
 const toRecordContents = (category: Category, menu: Menu): void => {
   if (!editable.value) {
-    if (recorded_day) {
-      router.push({
-        name: "record",
-        params: route.params,
-        query: {
-          categoryId: category.id,
-          menuId: menu.id,
-          recordId: latestRecord.value.id,
-        },
-      });
-    } else {
-      router.push({
-        name: "record",
-        params: route.params,
-        query: {
-          categoryId: category.id,
-          menuId: menu.id,
-          recordId: latestRecord.value.id,
-        },
-      });
-    }
+    router.push({
+      name: "record",
+      params: route.params,
+      query: {
+        categoryId: category.id,
+        menuId: menu.id,
+        recordId: resolveRecordStateId(props.records, latestRecord.value.id),
+      },
+    });
   } else {
     return;
   }

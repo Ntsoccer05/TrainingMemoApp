@@ -38,7 +38,6 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::post('/menus/update', [MenuController::class, 'update']);
     Route::post('/category/delete', [MenuController::class, 'destroy']);
     Route::post('/menus/delete', [MenuController::class, 'delete']);
-    Route::get('/recordMenu', [RecordMenuController::class, 'index']);
     Route::post('/recordMenu/create', [RecordMenuController::class, 'create']);
     Route::get('/recordContent', [RecordContentController::class, 'index']);
     Route::get('/recordContent/show', [RecordContentController::class, 'show']);

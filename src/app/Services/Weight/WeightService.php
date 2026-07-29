@@ -63,11 +63,12 @@ class WeightService
      * 翌日の体重記録が存在しないタグはスキップする。
      *
      * @param int $userId
+     * @param \Illuminate\Database\Eloquent\Collection<int, WeightTag>|null $tags 呼び出し元で取得済みのタグ一覧があれば渡す(未指定時は内部で取得)
      * @return array<int, array{tag: string, average_diff: float, sample_count: int}>
      */
-    public function getTagStatistics(int $userId): array
+    public function getTagStatistics(int $userId, ?\Illuminate\Database\Eloquent\Collection $tags = null): array
     {
-        $tags = WeightTag::where('user_id', $userId)->get();
+        $tags = $tags ?? WeightTag::where('user_id', $userId)->get();
 
         if ($tags->isEmpty()) {
             return [];
@@ -196,12 +197,14 @@ class WeightService
             )->first();
         }
 
+        $tags = $this->getAllTags($userId);
+
         return [
             'records' => $records,
             'target_weight' => $user->target_weight,
             'target_weight_date' => $user->target_weight_date?->format('Y-m-d'),
-            'tags' => $this->getAllTags($userId),
-            'tag_stats' => $this->getTagStatistics($userId),
+            'tags' => $tags,
+            'tag_stats' => $this->getTagStatistics($userId, $tags),
             'selected_date_record' => $selectedDateRecord,
         ];
     }

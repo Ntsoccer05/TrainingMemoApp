@@ -21,14 +21,11 @@ export default function useGetHistoryRecordContent(){
                 recorded_at,
             }
         }).then((res) =>{
-            if(res.data.historyTgtMenus){
-                historyRecords.value = res.data.historyTgtRecords
-                historyMenus.value = res.data.historyTgtMenus
-                hasHistoryRecord.value = true
-            }else{
-                hasHistoryRecord.value = false
-            }
+            historyRecords.value = res.data.historyTgtRecords
+            historyMenus.value = res.data.historyTgtMenus
+            hasHistoryRecord.value = res.data.historyTgtMenus.length > 0
         }).catch((err)=>{
+            hasHistoryRecord.value = false
         })
     }
 

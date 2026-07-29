@@ -334,10 +334,9 @@
 import { ref, onMounted, computed, watch, ComputedRef, nextTick } from "vue";
 import { onBeforeRouteLeave, useRoute } from "vue-router";
 import useGetLoginUser from "../../composables/certification/useGetLoginUser";
-import useGetTgtRecordContent from "../../composables/record/useGetTgtRecordContent.js";
 import axios from "axios";
 import { useStore } from "vuex";
-import { HistoryRecord } from "../../types/record";
+import { HistoryRecord, TgtRecordContent } from "../../types/record";
 import userSessionStorage from "../../utils/userSessionStorage";
 
 // エンターキーを押すと次の要素入力可
@@ -383,6 +382,8 @@ import userSessionStorage from "../../utils/userSessionStorage";
 const props = defineProps<{
   second_record: HistoryRecord[];
   hasSecondRecord: boolean;
+  tgtRecord: TgtRecordContent[];
+  hasTgtRecord: boolean;
   hasOneHand: boolean;
   category_id: string;
   menu_id: string;
@@ -419,8 +420,6 @@ const thisMemo = ref<HTMLInputElement[] | null>(null);
 
 const maxBeforeLength = ref<string>("");
 
-const canClickFillBefore = ref<boolean>(false);
-
 // メニューはセレクトボックス、休憩時間はタイムピッカー
 type DispContents = {
   set: number;
@@ -444,8 +443,9 @@ const isDisabled = ref<boolean>(false);
 const { getLoginUser, loginUser } = useGetLoginUser();
 const { getSessionLoginUser } = userSessionStorage();
 
-//今回記録するデータの値を取得
-const { tgtRecord, hasTgtRecord, getTgtRecords } = useGetTgtRecordContent();
+//今回記録するデータの値(親から渡される)
+const tgtRecord: ComputedRef<TgtRecordContent[]> = computed(() => props.tgtRecord);
+const hasTgtRecord: ComputedRef<boolean> = computed(() => props.hasTgtRecord);
 
 const contents = ref<DispContents[]>([
   { set: 0, menu: "", weight: 0, rep: 0, rest: 0 },
@@ -463,7 +463,6 @@ const contents = ref<DispContents[]>([
 const emits = defineEmits<{
   (e: "totalSet", value: string): void;
   (e: "beforeTotalSet", value: string): void;
-  (e: "canClick", value: boolean): void;
 }>();
 
 // watchは引数を二つ持つ(一つ目：監視対象、二つ目：新しい値と古い値)
@@ -591,21 +590,10 @@ const postRecordContent = (index: number) => {
       memo: memo.value[index],
     })
     .then((res) => {
-      // 今回の合計セット数
-      canClickFillBefore.value = true;
       // emit()で親に値を渡す、第一引数：親側の@～の～の名前、第二引数：親に渡す値
       emits("totalSet", res.data.totalSet);
-      if (res.data.totalSet > 0) {
-        canClickFillBefore.value = true;
-      } else {
-        canClickFillBefore.value = false;
-      }
-      emits("canClick", canClickFillBefore.value);
     })
-    .catch((err) => {
-      canClickFillBefore.value = false;
-      emits("canClick", canClickFillBefore.value);
-    });
+    .catch((err) => {});
 };
 
 // 重量と回数を自動補完
@@ -625,34 +613,35 @@ const complementData = (val: string, tgtVal: string[], index: number) => {
 };
 
 //tgtRecordを初期レンダリング時に取得するため、変更を常にwatchする。
-watch(tgtRecord, () => {
-  if (hasTgtRecord.value) {
-    canClickFillBefore.value = true;
-    emits("canClick", canClickFillBefore.value);
-    //emit()で親に値を渡す、第一引数：親側の@～の～の名前、第二引数：親に渡す値
-    emits("totalSet", tgtRecord.value.length.toString());
-    tgtRecord.value.forEach((record) => {
-      const index: number = record.set - 1;
-      weight.value[index] = record.weight !== null ? record.weight : "";
-      rep.value[index] = record.rep !== null ? record.rep : "";
-      rightWeight.value[index] = record.right_weight !== null ? record.right_weight : "";
-      rightRep.value[index] = record.right_rep !== null ? record.right_rep : "";
-      leftWeight.value[index] = record.left_weight !== null ? record.left_weight : "";
-      leftRep.value[index] = record.left_rep !== null ? record.left_rep : "";
-      memo.value[index] = record.memo !== null ? record.memo : "";
-      if (record.set > 5) {
-        const tempObj = ref([]);
-        for (let i = 6; i <= record.set; i++) {
-          tempObj.value[i] = { set: record.set + i };
-          contents.value = [...contents.value, tempObj.value[i]];
+watch(
+  tgtRecord,
+  () => {
+    if (hasTgtRecord.value) {
+      //emit()で親に値を渡す、第一引数：親側の@～の～の名前、第二引数：親に渡す値
+      emits("totalSet", tgtRecord.value.length.toString());
+      tgtRecord.value.forEach((record) => {
+        const index: number = record.set - 1;
+        weight.value[index] = record.weight !== null ? record.weight : "";
+        rep.value[index] = record.rep !== null ? record.rep : "";
+        rightWeight.value[index] = record.right_weight !== null ? record.right_weight : "";
+        rightRep.value[index] = record.right_rep !== null ? record.right_rep : "";
+        leftWeight.value[index] = record.left_weight !== null ? record.left_weight : "";
+        leftRep.value[index] = record.left_rep !== null ? record.left_rep : "";
+        memo.value[index] = record.memo !== null ? record.memo : "";
+        if (record.set > 5) {
+          const tempObj = ref([]);
+          for (let i = 6; i <= record.set; i++) {
+            tempObj.value[i] = { set: record.set + i };
+            contents.value = [...contents.value, tempObj.value[i]];
+          }
         }
-      }
-    });
-  } else {
-    canClickFillBefore.value = false;
-    emits("canClick", canClickFillBefore.value);
-  }
-});
+      });
+    } else {
+      emits("totalSet", "0");
+    }
+  },
+  { immediate: true }
+);
 // 高さを調整する関数
 const adjustHeight = (
   element: HTMLInputElement,
@@ -732,15 +721,6 @@ onMounted(async () => {
     loginUser.value = sessionLoginUser;
   } else {
     await getLoginUser();
-  }
-  await getTgtRecords(
-    loginUser.value.id,
-    props.category_id,
-    props.menu_id,
-    props.record_state_id
-  );
-  if (tgtRecord.value.length == 0) {
-    emits("totalSet", "0");
   }
   store.commit("compGetData", true);
 

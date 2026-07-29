@@ -6,26 +6,11 @@
           class="p-5 text-lg font-semibold text-left text-gray-900 bg-white dark:text-white dark:bg-gray-800"
         >
           <button
-            class="block w-11/12 bg-blue-500 hover:bg-blue-700 text-white font-bold md:py-2 py-px px-4 border-2 border-black mt-3 mb-3 mx-auto"
-            ref="fillBeforeBtn"
-            @click="fillBeforeRecord"
-          >
-            {{ BeforeBtnTxt }}
-          </button>
-          <button
             class="block w-11/12 bg-green-500 hover:bg-green-700 text-white font-bold md:py-2 py-px px-4 border-2 border-black mt-3 mb-3 mx-auto"
             @click="confirmHistory()"
           >
             履歴を確認
           </button>
-          <p
-            :class="[
-              'mx-auto text-red-500 text-sm mt-1 mb-2 text-center',
-              isDispTxt ? 'block' : 'hidden',
-            ]"
-          >
-            ※前回の記録を埋めるためには今回の記録を埋めてください
-          </p>
           <div class="text-center mt-5">
             <input
               class="bg-slate-100 border-black border-x border-y mr-2"
@@ -65,8 +50,10 @@
         </caption>
 
         <RecordTable
-          :second_record="secondRecord"
-          :hasSecondRecord="hasSecondRecord"
+          :second_record="previousRecords"
+          :hasSecondRecord="hasPreviousRecord"
+          :tgtRecord="tgtRecords"
+          :hasTgtRecord="hasTgtRecord"
           :hasOneHand="hasOneHand"
           :category_id="category_id"
           :menu_id="menu_id"
@@ -76,7 +63,6 @@
           :beforeHeaderTxt="BeforeHeaderTxt"
           @beforeTotalSet="fillBeforeTodalSet"
           @totalSet="fillThisTodalSet"
-          @canClick="ableToClickBefore"
         />
       </table>
     </template>
@@ -137,7 +123,7 @@ import {
 import { useStore } from "vuex";
 import useGetRecordState from "../../composables/record/useGetRecordState";
 import useGetLoginUser from "../../composables/certification/useGetLoginUser";
-import useGetSecondRecordContent from "../../composables/record/useGetSecondRecordContent.js";
+import useGetRecordContent from "../../composables/record/useGetRecordContent";
 import RecordTable from "./RecordTable.vue";
 import HistoryRecordContents from "./HistoryRecordContents.vue";
 import LoadingSpinner from "../common/LoadingSpinner.vue";
@@ -158,38 +144,32 @@ const {
   setMenuContentSession,
   getMenuContentSession,
   removeMenuContentSession,
-  getFillBeforeRecordSession,
-  setFillBeforeRecordSession,
-  removeFillBeforeRecordSession,
+  getRecordDataSession,
+  setRecordDataSession,
   getHistoryRecordSession,
   setHistoryRecordSession,
   removeHistoryRecordSession,
   getComplementContentsSession,
   setComplementContentsSession,
 } = menuContentSessionStorage(category_id, menu_id, record_state_id);
-const fillBeforeRecordSession = getFillBeforeRecordSession();
 
 const hasOneHand = ref<boolean>(false);
 
 const bodyWeight = ref<string>("");
-const beforeBodyWeight = ref<string>(fillBeforeRecordSession?.bodyWeight || "");
+const beforeBodyWeight = ref<string>("");
 
 const thisTotalSet = ref<string>("");
 const beforeTotalSet = ref<string>("");
 
 const msgNoBeforeData = ref<string>("");
 
-const fillBeforeBtn = ref<string>("");
 const compGetData = ref<boolean>(false);
 
 const showModal = ref<boolean>(false);
 
-// 前回か前々回か
-const BeforeBtnTxt = ref<string>("");
-const isDispTxt = ref<boolean>(false);
-const BeforeWeightTxt = ref<string>("");
-const BeforeTotalSetTxt = ref<string>("");
-const BeforeHeaderTxt = ref<string>("");
+const BeforeWeightTxt = "前回の体重";
+const BeforeTotalSetTxt = "前回の合計セット数";
+const BeforeHeaderTxt = "前回の記録";
 
 const menuContent = ref<string>("");
 
@@ -205,7 +185,7 @@ watch(complementContents, (value) => {
 });
 
 //前回データが存在するか？
-const isBeforeData = ref<boolean>(!!fillBeforeRecordSession);
+const isBeforeData = ref<boolean>(false);
 
 // 最新のレコード状態を取得
 const { getLatestRecordState, latestRecord } = useGetRecordState();
@@ -213,13 +193,15 @@ const { getLatestRecordState, latestRecord } = useGetRecordState();
 const { getLoginUser, loginUser } = useGetLoginUser();
 const { getSessionLoginUser } = userSessionStorage();
 
-//前回のデータを取得
+// 今回の記録と前回の記録をまとめて取得
 const {
-  secondRecord,
-  secondRecordState,
-  hasSecondRecord,
-  getSecondRecord,
-} = useGetSecondRecordContent(fillBeforeRecordSession);
+  tgtRecords,
+  hasTgtRecord,
+  previousRecords,
+  previousRecordState,
+  hasPreviousRecord,
+  getRecordContent,
+} = useGetRecordContent();
 
 const toHome = (): void => {
   //router.pushが効かない
@@ -258,46 +240,6 @@ const getMenuContent = async () => {
     .catch((err) => {});
 };
 
-const fillBeforeRecord = async () => {
-  const fillBeforeRecordSession = getFillBeforeRecordSession();
-
-  if (fillBeforeRecordSession) {
-    const data = fillBeforeRecordSession;
-    hasSecondRecord.value = true;
-    isBeforeData.value = true;
-    beforeBodyWeight.value = data.bodyWeight || "";
-    secondRecord.value = data.record;
-    return;
-  }
-
-  await getSecondRecord(
-    loginUser.value.id,
-    category_id,
-    menu_id,
-    record_state_id,
-    route.params.recordId as string,
-    thisTotalSet.value
-  );
-  if (hasSecondRecord.value) {
-    isBeforeData.value = true;
-    beforeBodyWeight.value = secondRecordState.value.bodyWeight
-      ? secondRecordState.value.bodyWeight.toString()
-      : "";
-    setFillBeforeRecordSession(secondRecordState.value.bodyWeight, secondRecord.value);
-  } else {
-    msgNoBeforeData.value = "記録がありません";
-  }
-  if (BeforeBtnTxt.value === "前回の記録を埋める") {
-    BeforeWeightTxt.value = "前回の体重";
-    BeforeTotalSetTxt.value = "前回の合計セット数";
-    BeforeHeaderTxt.value = "前回の記録";
-  } else {
-    // BeforeWeightTxt.value = "前々回の体重";
-    // BeforeTotalSetTxt.value = "前々回の合計セット数";
-    // BeforeHeaderTxt.value = "前々回の記録";
-  }
-};
-
 //第一引数に子供の値が入っている。
 const fillThisTodalSet = (e: string): void => {
   thisTotalSet.value = e;
@@ -305,16 +247,6 @@ const fillThisTodalSet = (e: string): void => {
 
 const fillBeforeTodalSet = (e: string) => {
   beforeTotalSet.value = e;
-};
-
-const ableToClickBefore = (e: boolean) => {
-  if (e) {
-    BeforeBtnTxt.value = "前回の記録を埋める";
-    isDispTxt.value = false;
-  } else {
-    // BeforeBtnTxt.value = "前々回の記録を埋める";
-    // isDispTxt.value = true;
-  }
 };
 
 const {
@@ -392,22 +324,39 @@ onMounted(async () => {
   }
   await getLatestRecordState();
   await getMenuContent();
-  BeforeBtnTxt.value = "前回の記録を埋める";
-  BeforeWeightTxt.value = "前回の体重";
-  BeforeTotalSetTxt.value = "前回の合計セット数";
-  BeforeHeaderTxt.value = "前回の記録";
-  isDispTxt.value = false;
-  // compGetData.value = true;
-  // } else {
-  // BeforeBtnTxt.value = "前々回の記録を埋める";
-  // BeforeWeightTxt.value = "前々回の体重";
-  // BeforeTotalSetTxt.value = "前々回の合計セット数";
-  // BeforeHeaderTxt.value = "前々回の記録";
-  // isDispTxt.value = true;
-  // compGetData.value = true;
-  // }
+
+  const recordDataSession = getRecordDataSession();
+  if (recordDataSession) {
+    tgtRecords.value = recordDataSession.tgtRecords || [];
+    hasTgtRecord.value = recordDataSession.hasTgtRecord;
+    previousRecords.value = recordDataSession.previousRecords || [];
+    previousRecordState.value = recordDataSession.previousRecordState;
+    hasPreviousRecord.value = recordDataSession.hasPreviousRecord;
+  } else {
+    const fetchedRecordContent = await getRecordContent(
+      loginUser.value.id,
+      category_id,
+      menu_id,
+      record_state_id,
+      route.params.recordId as string
+    );
+    if (fetchedRecordContent) {
+      setRecordDataSession(
+        tgtRecords.value,
+        hasTgtRecord.value,
+        previousRecords.value,
+        previousRecordState.value,
+        hasPreviousRecord.value
+      );
+    }
+  }
+  isBeforeData.value = hasPreviousRecord.value;
+  beforeBodyWeight.value = previousRecordState.value?.bodyWeight
+    ? previousRecordState.value.bodyWeight.toString()
+    : "";
+  msgNoBeforeData.value = hasPreviousRecord.value ? "" : "前回の記録がありません";
+
   compGetData.value = true;
-  const fillBeforeBtnDom: string = fillBeforeBtn.value;
 
   if (latestRecord.value.bodyWeight) {
     bodyWeight.value = `${latestRecord.value.bodyWeight} kg`;

@@ -4,6 +4,7 @@ namespace App\Services\Auth;
 
 use App\Models\Category;
 use App\Models\WeightTag;
+use Illuminate\Support\Facades\DB;
 
 class RegisterService
 {
@@ -19,12 +20,14 @@ class RegisterService
      */
     public function setupDefaultData(int $userId): void
     {
-        foreach (self::DEFAULT_CATEGORIES as $content) {
-            Category::create(['user_id' => $userId, 'content' => $content]);
-        }
+        DB::transaction(function () use ($userId) {
+            foreach (self::DEFAULT_CATEGORIES as $content) {
+                Category::create(['user_id' => $userId, 'content' => $content]);
+            }
 
-        foreach (self::DEFAULT_WEIGHT_TAGS as $content) {
-            WeightTag::create(['user_id' => $userId, 'content' => $content]);
-        }
+            foreach (self::DEFAULT_WEIGHT_TAGS as $content) {
+                WeightTag::create(['user_id' => $userId, 'content' => $content]);
+            }
+        });
     }
 }

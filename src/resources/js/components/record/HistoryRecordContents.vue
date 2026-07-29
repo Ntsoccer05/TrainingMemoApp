@@ -1,6 +1,11 @@
 <template>
   <div>
-    <div class="text-center">最大過去５件を表示しています。</div>
+    <template v-if="hasHistoryRecord">
+      <div class="text-center">最大過去５件を表示しています。</div>
+    </template>
+    <template v-else>
+      <div class="text-center">過去の記録はありません。</div>
+    </template>
     <template v-for="(historyMenu, index) in historyMenus" :key="historyMenu.id">
       <table class="border border-collapse table-fixed mx-auto mt-5">
         <thead>

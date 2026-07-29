@@ -13,8 +13,6 @@ use Illuminate\Http\Request;
 class RecordContentController extends Controller
 {
     public function index(GetRecordContentsRequest $request, RecordMenu $recordMenu, RecordState $recordState, RecordContentService $recordContentService){
-        $tgtRecords = Null;
-
         $user_id = $request->user_id;
         $category_id = $request->category_id;
         $menu_id = $request->menu_id;
@@ -70,7 +68,8 @@ class RecordContentController extends Controller
             return response()->json(["status_code" => 200, "message" => "記録した全てのデータを取得", 'records'=>$recordContents]);
         }
         // メニュー選択画面にて記録済みメニューをマーキング
-        if(isset($recorded_at)){
+        // (記録画面では record_state_id が必ず送られるため、ここでは record_state_id が無い場合のみ扱う)
+        if(isset($recorded_at) && !$record_state_id){
             $record = $recordState->where('user_id', $user_id)->where('recorded_at', $recorded_at)->first();
             // 初期化
             $recordContent=[];
@@ -117,38 +116,32 @@ class RecordContentController extends Controller
             $recordContents[] = $recordContent;
             return response()->json(["status_code" => 200, "message" => "選択した日付のデータを取得", 'records'=>$recordContents]);
         }
-        // 筋トレ記録画面にて記録済み内容を表示
-        $tgtRecord=$recordMenu->where(function($query) use($user_id, $category_id, $menu_id,$record_state_id){
-            $query->where([['user_id', $user_id], ['category_id', $category_id], ['menu_id', $menu_id],['record_state_id', $record_state_id]]);
-        })->first();
-
-        if($tgtRecord){
-            $tgtRecords=$tgtRecord->recordContents()->orderBy('set', 'asc')->get();
-            return response()->json(["status_code" => 200, "message" => "記録日のデータを取得", 'tgtRecords'=>$tgtRecords]);
-        }else{
-            return response()->json(["status_code" => 200, "message" => "記録日のデータはありません", 'tgtRecords'=>$tgtRecords]);
-        }
+        // 筋トレ記録画面にて記録済み内容と前回の記録を表示(上記2分岐に当てはまらない場合のフォールバック)
+        $result = $recordContentService->getCurrentAndPreviousRecord(
+            $user_id, $category_id, $menu_id, $record_state_id, $recorded_at
+        );
+        return response()->json([
+            "status_code" => 200,
+            "message" => "記録日と前回の記録データを取得",
+            "tgtRecords" => $result['tgtRecords'],
+            "previousRecordState" => $result['previousRecordState'],
+            "previousRecords" => $result['previousRecords'],
+        ]);
     }
 
     // 履歴を確認時に使用
-    public function show(Request $request, RecordMenu $recordMenu){
-        $historyTgtRecords = null;
-
-        $user_id = $request->user_id;
-        $category_id = $request->category_id;
-        $menu_id = $request->menu_id;
-        $record_state_id = $request->record_state_id;
-        $recorded_at = $request->recorded_at;
-
-        // loadで特定のカラムのみ取得する場合リレーションに必要な主キーや外部キーは必ず指定する必要がある
-        $historyTgtMenus = $recordMenu->where(function($query) use($user_id, $category_id, $menu_id, $recorded_at){
-            $query->where([['user_id', $user_id], ['category_id', $category_id], ['menu_id', $menu_id], ['recorded_at', '<', $recorded_at]]);
-        })->orderBy('recorded_at', 'desc')->take(5)->get()->load('recordState:id,bodyWeight');
+    public function show(Request $request, RecordContentService $recordContentService){
+        $historyTgtMenus = $recordContentService->getMenuHistory(
+            $request->user_id,
+            $request->category_id,
+            $request->menu_id,
+            $request->recorded_at
+        );
 
         if($historyTgtMenus){
-            foreach($historyTgtMenus as $historyTgtMenu){
-                $historyTgtRecords[] = $historyTgtMenu->recordContents()->orderBy('set', 'asc')->get();
-            }
+            $historyTgtRecords = $historyTgtMenus->isNotEmpty()
+                ? $historyTgtMenus->map(fn($historyTgtMenu) => $historyTgtMenu->recordContents)->all()
+                : null;
             return response()->json(["status_code" => 200, "message" => "記録日のデータを取得", "historyTgtMenus"=>$historyTgtMenus, "historyTgtRecords"=> $historyTgtRecords]);
         }
     }
