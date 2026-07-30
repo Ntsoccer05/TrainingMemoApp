@@ -55,11 +55,19 @@ jobs:
 
       - run: composer install --no-dev --optimize-autoloader --prefer-dist
 
-      - name: Cache Laravel config/routes/events for faster Lambda cold start
-        # config:cache はビルド時点でconfig()の解決結果をbootstrap/cache/config.phpに固定してZIPに含める。
-        # ここで本番相当の値(DB_PASSWORD/APP_KEY等)を渡さないと、空値がキャッシュされて
-        # Lambda側の環境変数(後段の Configure Lambda environment variables ステップで設定)が
-        # 一切参照されなくなり本番が壊れるため、値は下のステップと必ず同じ内容に保つこと。
+      - name: Cache Laravel routes/events for faster Lambda cold start
+        # 注意: config:cache は意図的に実行しない。
+        # config/filament.php が `app_path('Filament/Resources')` 等をconfig値として
+        # 直接評価しており、config:cacheを実行するとこの絶対パスがビルド時点
+        # (GitHub Actions runner上の /home/runner/work/.../src/...)の値として
+        # bootstrap/cache/config.phpに固定されてしまう。この値はLambdaの実行時パス
+        # (/var/task/...)と一致しないため、Filamentのリソース自動検出
+        # (registerComponentsFromDirectory)がディレクトリ不在として静かに失敗し、
+        # 管理画面のサイドバーナビゲーション(カテゴリ・メニュー等へのリンク)が
+        # 一切表示されなくなる障害を起こしていた(2026-07-30に発覚・特定)。
+        # bootstrap/app.php は dirname(__DIR__) でベースパスを実行時に動的解決するため、
+        # config:cacheさえしなければ app_path()/base_path() はLambda上でも正しく解決される。
+        # route:cache/event:cacheはファイルパスでなくクラス名を解決するため、この問題の影響を受けない。
         env:
           APP_ENV: production
           APP_URL: https://training-memo.com
@@ -85,7 +93,6 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
-          php artisan config:cache
           php artisan route:cache
           php artisan event:cache
 
