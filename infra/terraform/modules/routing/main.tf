@@ -117,6 +117,30 @@ resource "aws_cloudfront_distribution" "main" {
     }
   }
 
+  # Filamentのコアアセット(/filament/assets/app.js等)配信用ルート。
+  # config/filament.php の core_path (デフォルト'filament') はLaravelのルートであり、
+  # S3の静的SPAには存在しないため、他の/admin*等と同様にAPI Gatewayへ転送する必要がある。
+  # これが抜けていたため、Filament管理画面のJS/CSSが読み込めず(404→SPAのindex.htmlへ
+  # フォールバックし、ブラウザがHTMLをJS/CSSとして解釈できずエラーになる)UIが崩れていた。
+  ordered_cache_behavior {
+    path_pattern           = "/filament/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "api-gateway"
+    viewer_protocol_policy = "https-only"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+
+    forwarded_values {
+      query_string = true
+      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin"]
+      cookies {
+        forward = "all"
+      }
+    }
+  }
+
   ordered_cache_behavior {
     path_pattern           = "/sanctum/*"
     allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
