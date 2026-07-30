@@ -122,21 +122,20 @@ const hasOneHand: ComputedRef<boolean> = computed(() => props.hasOneHand);
 
 // 高さを調整する関数
 const adjustHeight = (element: HTMLInputElement) => {
-  // 内容を改行文字で分割して行数をカウント
-  const textLines = element.value.split("\n").length;
-  const lineHeight = 1;
-
-  const rows: number = Number(element.getAttribute("rows"));
-
-  const newHeight = lineHeight * textLines;
-
-  element.style.height = `${newHeight}rem`; // スクロールの高さに基づいて高さを設定
+  // 改行数だけでなく折り返し(word-wrap)による行数もscrollHeightで反映させる
+  element.style.height = "auto";
+  element.style.height = `${element.scrollHeight}px`;
 };
 onMounted(() => {
-  historyMemo.value &&
-    historyMemo.value.forEach((elm) => {
-      elm.value !== "" && adjustHeight(elm);
-    });
+  // 親のModal(@kouts/vue-modal)はmount(DOM挿入)とshow(display切り替え)を
+  // 別のnextTickで行うため、onMounted時点ではまだdisplay:noneでscrollHeightが0になる。
+  // マクロタスク(setTimeout)まで遅延させ、show切り替えが実際に描画された後に高さを計算する。
+  setTimeout(() => {
+    historyMemo.value &&
+      historyMemo.value.forEach((elm) => {
+        elm.value !== "" && adjustHeight(elm);
+      });
+  }, 0);
 });
 </script>
 
