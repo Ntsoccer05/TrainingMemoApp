@@ -338,6 +338,7 @@ import axios from "axios";
 import { useStore } from "vuex";
 import { HistoryRecord, TgtRecordContent } from "../../types/record";
 import userSessionStorage from "../../utils/userSessionStorage";
+import menuContentSessionStorage from "../../utils/menuContentSessionStorage";
 import resolveMemoAdjustIndexes from "../../utils/resolveMemoAdjustIndexes";
 
 // エンターキーを押すと次の要素入力可
@@ -443,6 +444,13 @@ const isDisabled = ref<boolean>(false);
 //ログインユーザー情報取得
 const { getLoginUser, loginUser } = useGetLoginUser();
 const { getSessionLoginUser } = userSessionStorage();
+
+// 今回の記録を保存したらキャッシュを無効化する(次回訪問時に古い記録内容で上書きされるのを防ぐ)
+const { removeRecordDataSession } = menuContentSessionStorage(
+  props.category_id,
+  props.menu_id,
+  props.record_state_id
+);
 
 //今回記録するデータの値(親から渡される)
 const tgtRecord: ComputedRef<TgtRecordContent[]> = computed(() => props.tgtRecord);
@@ -603,6 +611,8 @@ const postRecordContent = (index: number) => {
     .then((res) => {
       // emit()で親に値を渡す、第一引数：親側の@～の～の名前、第二引数：親に渡す値
       emits("totalSet", res.data.totalSet);
+      // サーバー側の内容が更新されたため、古い今回の記録キャッシュを破棄する
+      removeRecordDataSession();
     })
     .catch((err) => {});
 };
