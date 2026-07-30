@@ -19,7 +19,7 @@
               v-model="complementContents"
             />
             <label for="complementContents" class="text-base align-[1px]"
-              >重量・回数を補完する</label
+              >前セットと同じ値を自動入力</label
             >
           </div>
           <div class="grid grid-cols-2 w-full">
