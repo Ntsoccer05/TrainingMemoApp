@@ -1,0 +1,136 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Property App\\\\Models\\\\RankingRecord\\:\\:\\$deadlift_volume \\(array\\|null\\) does not accept Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, App\\\\Models\\\\RecordMenu\\>\\.$#"
+			count: 1
+			path: app/Console/Commands/RecordRanking.php
+
+		-
+			message: "#^Property App\\\\Models\\\\RankingRecord\\:\\:\\$deadlift_weight \\(array\\|null\\) does not accept Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, App\\\\Models\\\\RecordMenu\\>\\.$#"
+			count: 1
+			path: app/Console/Commands/RecordRanking.php
+
+		-
+			message: "#^Call to an undefined method Laravel\\\\Socialite\\\\Contracts\\\\Provider\\:\\:stateless\\(\\)\\.$#"
+			count: 1
+			path: app/Http/Controllers/Auth/LoginController.php
+
+		-
+			message: "#^Call to an undefined method Laravel\\\\Socialite\\\\Contracts\\\\Provider\\:\\:userFromToken\\(\\)\\.$#"
+			count: 1
+			path: app/Http/Controllers/Auth/RegisterController.php
+
+		-
+			message: "#^Call to function is_null\\(\\) with App\\\\Models\\\\User will always evaluate to false\\.$#"
+			count: 1
+			path: app/Http/Controllers/Auth/RegisterController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\MenuController\\:\\:delete\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\JsonResponse\\.$#"
+			count: 2
+			path: app/Http/Controllers/MenuController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\MenuController\\:\\:destroy\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\JsonResponse\\.$#"
+			count: 2
+			path: app/Http/Controllers/MenuController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\MenuController\\:\\:edit\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\JsonResponse\\.$#"
+			count: 2
+			path: app/Http/Controllers/MenuController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\MenuController\\:\\:index\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\JsonResponse\\.$#"
+			count: 2
+			path: app/Http/Controllers/MenuController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\MenuController\\:\\:store\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\JsonResponse\\.$#"
+			count: 6
+			path: app/Http/Controllers/MenuController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\MenuController\\:\\:update\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\JsonResponse\\.$#"
+			count: 2
+			path: app/Http/Controllers/MenuController.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$id$#"
+			count: 4
+			path: app/Http/Controllers/MenuController.php
+
+		-
+			message: "#^Variable \\$categorylist in isset\\(\\) always exists and is not nullable\\.$#"
+			count: 1
+			path: app/Http/Controllers/MenuController.php
+
+		-
+			message: "#^Variable \\$menulist in isset\\(\\) always exists and is not nullable\\.$#"
+			count: 1
+			path: app/Http/Controllers/MenuController.php
+
+		-
+			message: "#^If condition is always true\\.$#"
+			count: 1
+			path: app/Http/Controllers/RecordContentController.php
+
+		-
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 1
+			path: app/Http/Controllers/RecordContentController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\RecordController\\:\\:destroy\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\JsonResponse\\.$#"
+			count: 2
+			path: app/Http/Controllers/RecordController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\RecordController\\:\\:index\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\JsonResponse\\.$#"
+			count: 1
+			path: app/Http/Controllers/RecordController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\RecordController\\:\\:update\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\JsonResponse\\.$#"
+			count: 2
+			path: app/Http/Controllers/RecordController.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$id$#"
+			count: 2
+			path: app/Http/Controllers/RecordController.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Models\\\\RecordContent\\:\\:\\$max_left_weight\\.$#"
+			count: 1
+			path: app/Http/Controllers/RecordRankingController.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Models\\\\RecordContent\\:\\:\\$max_right_weight\\.$#"
+			count: 1
+			path: app/Http/Controllers/RecordRankingController.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Models\\\\RecordContent\\:\\:\\$max_weight\\.$#"
+			count: 1
+			path: app/Http/Controllers/RecordRankingController.php
+
+		-
+			message: "#^Strict comparison using \\=\\=\\= between bool and 1 will always evaluate to false\\.$#"
+			count: 1
+			path: app/Http/Controllers/RecordRankingController.php
+
+		-
+			message: "#^Variable \\$rankingRecord in isset\\(\\) always exists and is not nullable\\.$#"
+			count: 1
+			path: app/Http/Controllers/RecordRankingController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Middleware\\\\Authenticate\\:\\:redirectTo\\(\\) should return string\\|null but empty return statement found\\.$#"
+			count: 1
+			path: app/Http/Middleware/Authenticate.php
+
+		-
+			message: "#^Property App\\\\Models\\\\User\\:\\:\\$target_weight_date \\(Carbon\\\\Carbon\\|null\\) does not accept string\\|null\\.$#"
+			count: 1
+			path: app/Services/Weight/WeightService.php

@@ -55,7 +55,7 @@ docker exec trainingmemo-app-1 php artisan test tests/Feature/SomeTest.php
 
 **サービスベース × レイヤードアーキテクチャ**(ドメインごとに分割し、各ドメイン内部は Controller → Service → Repository(任意) → Model のレイヤー構成)を採用する。
 
-**詳細なレイヤー定義・ディレクトリ規約・命名規則・移行方針は [`.claude/rules/backend-architecture.md`](.claude/rules/backend-architecture.md) を参照すること。バックエンドの実装・変更に着手する前に必ず読むこと。**
+**詳細なレイヤー定義・ディレクトリ規約・命名規則・移行方針は [`.claude/rules/backend-architecture.md`](.claude/rules/backend-architecture.md) にまとめている。** このファイルは `paths` frontmatter 指定により `src/app/**/*.php` / `src/database/**/*.php` を参照した際に自動でコンテキストへ注入されるため、手動で読みに行く必要はない(常時ロードではなく、バックエンド作業時のみコンテキストを消費する)。
 
 現状のドメイン(コントローラー単位): Record, RecordContent, RecordMenu, Menu, RecordRanking, Auth, Inquiry
 
@@ -95,7 +95,9 @@ docker exec trainingmemo-app-1 php artisan test tests/Feature/SomeTest.php
 - **メールテスト**: Mailhog は `http://localhost:8025`
 - **管理パネル**: Filament 管理パネルは `/admin`
 - **テスト**: `tests/Feature`・`tests/Unit` にサンプルのみ。新規機能は `test-driven-development` スキルに従いテストを先に書く
-- **Lint/型チェック**: package.json に lint/typecheck スクリプトは未整備(将来追加を検討)
+- **Lint/型チェック(フロントエンド)**: `npm run lint` (ESLint, `.eslintrc.cjs`) / `npm run lint:fix` / `npm run typecheck` (vue-tsc) を整備済み。既存コードは段階移行中のため `vue3-essential` ルールセットを採用しスタイル系ルールは緩めている
+- **Lint/静的解析(バックエンド)**: `composer pint` (Laravel Pint, `pint.json`) / `composer stan` (Larastan, `phpstan.neon`, level 4)。既存コードの指摘は `phpstan-baseline.neon` に退避済みで、新規・変更コードのみ検査対象になる
+- **静的解析の自動実行**: `.claude/hooks/lint-changed-file.js` が PostToolUse(Edit/Write) で変更ファイルに対し ESLint(自動修正 `--fix` + 残エラーをブロック)と Pint(自動整形、ブロックしない)を実行する(`.claude/settings.json` 参照)。**PHPStan(Larastan)と vue-tsc はこの hook には含めていない** — Windows + Docker Desktop の bind mount 越しだと単一ファイルの PHPStan 解析でも実測 ~170秒かかり、編集のたびに実行するのは非現実的なため。代わりにコード品質レビュー(サブエージェント)がレビュー開始時に `npm run typecheck` と `docker exec trainingmemoapp-app-1 composer stan` を1回実行して型エラーを確認する運用にしている(`.claude/skills/subagent-driven-development/code-quality-reviewer-prompt.md` 参照)
 - **OPcache preload(ローカルAPI高速化)**: Windows上のDocker Desktopは`./src`バインドマウント越しのファイルI/Oが遅く、対策として`docker/php/php.ini`で`opcache.preload=/var/www/html/preload.php`を設定している。preload対象は`src/preload-manifest.txt`に列挙した実測済みファイルのみ(vendor全体を対象にすると一部ファイルでpreloadがクラッシュするため)。**`composer install`/`composer update`でvendorの依存関係を変更した場合は、`src/preload.php`冒頭のコメントに記載した手順で`src/preload-manifest.txt`を再生成し、`docker-compose restart app`でOPcacheを再読み込みすること。** 再生成を忘れても致命的ではない(新しく増えたvendorファイルは通常通り毎リクエスト検証されるだけ)が、速度改善の恩恵を受けられない。
 
 ## 開発ワークフロー
@@ -132,7 +134,8 @@ docker exec trainingmemo-app-1 php artisan test tests/Feature/SomeTest.php
 | 機能ブランチの隔離 | `using-git-worktrees` |
 | フロントエンド画面の動作確認(実ブラウザ) | `chrome-screen-check` |
 | APIが遅い・レイテンシ調査 | `performance-investigation` |
-| バックエンドの実装・変更 | `.claude/rules/backend-architecture.md` を先に読む |
+| バックエンドの実装・変更 | `.claude/rules/backend-architecture.md`(`src/app/**/*.php` 等参照時に自動ロード) |
+| 同じレビュー指摘が3回目 | `review-digest`(`docs/review-history.json` を静的解析ルール等へ仕組み化) |
 
 ### 永続ドキュメント更新の判定
 

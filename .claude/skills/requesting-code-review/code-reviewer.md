@@ -30,6 +30,28 @@ Task tool (general-purpose):
     git diff {BASE_SHA}..{HEAD_SHA}
     ```
 
+    ## Static Analysis: Some Already Ran, You Must Run the Rest
+
+    Lint (ESLint) and formatting (Laravel Pint) already ran via hook on the changed
+    files and are green — do NOT spend review effort on formatting, indentation,
+    unused imports/vars, or dead code, that's already handled.
+
+    Type checking (`npm run typecheck` / vue-tsc, and `docker exec trainingmemoapp-app-1
+    composer stan` / Larastan) did NOT run via hook (each run costs ~90-170s over the
+    Windows/Docker Desktop bind mount regardless of scope — Laravel bootstrap I/O
+    dominates, not file count — so re-running it on every review round is expensive).
+
+    **REVIEW_ROUND: {REVIEW_ROUND}**
+    - If `first` (or unspecified — e.g. final review / ad-hoc request): run both
+      commands yourself now, once, before reviewing further, and report any type
+      errors as Critical/Important.
+    - If `re-review` (re-checking a fix within the same task): do NOT re-run them —
+      the prior round already confirmed a clean baseline. Just eyeball whether the
+      fix diff itself looks type-safe.
+
+    Spend your review budget on what static analysis structurally cannot see:
+    architecture, layering, test quality, security, spec fit, YAGNI.
+
     ## What to Check
 
     **Plan alignment:**
@@ -37,10 +59,9 @@ Task tool (general-purpose):
     - Are deviations justified improvements, or problematic departures?
     - Is all planned functionality present?
 
-    **Code quality:**
+    **Code quality (beyond what static analysis covers):**
     - Clean separation of concerns?
-    - Proper error handling?
-    - Type safety where applicable?
+    - Proper error handling (logic, not syntax)?
     - DRY without premature abstraction?
     - Edge cases handled?
 
@@ -126,6 +147,7 @@ Task tool (general-purpose):
 - `{PLAN_OR_REQUIREMENTS}` — 何をすべきか（計画ファイルパス、タスクテキスト、または要件）
 - `{BASE_SHA}` — 開始コミット
 - `{HEAD_SHA}` — 終了コミット
+- `{REVIEW_ROUND}` — `first`（そのタスクで最初のコード品質レビュー、または最終レビュー・アドホックレビュー） | `re-review`（同一タスク内での修正後の再レビュー）。省略時は `first` として扱う（= typecheck/stan を実行する）
 
 **レビュアーが返すもの：** 強み、問題（Critical / Important / Minor）、推奨事項、評価
 

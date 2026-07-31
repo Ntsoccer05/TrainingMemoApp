@@ -4,6 +4,8 @@
 
 **目的：** 実装者が要求されたものを（それ以上でも以下でもなく）作ったことを確認する
 
+**スコープ外：** フォーマット・未使用importなどは hook 経由の静的解析（ESLint/Pint）が既に検出済み。型エラー（vue-tsc/Larastan）は hook では実行されない（重すぎるため）ので、コード品質レビュー側でまとめて確認する。ここでは仕様との整合性のみを見る。
+
 ```
 Task tool (general-purpose):
   description: "Review spec compliance for Task N"

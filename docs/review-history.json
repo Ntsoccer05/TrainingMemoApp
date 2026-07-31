@@ -1,0 +1,15 @@
+[
+  {
+    "category": "デバッグコード残存",
+    "summary": "console.log をデバッグ後に消し忘れている",
+    "count": 3,
+    "status": "resolved",
+    "action": "ESLint no-console ルールを追加(error、console.warn/error は許可)。.eslintrc.cjs で有効化し、動作確認済み(review-digest スキルの実地検証として実施)",
+    "occurrences": [
+      { "date": "2026-07-20", "context": "Task: WeightManagement.vue のレビュー", "detail": "動作確認用の console.log がコミットに残っていた" },
+      { "date": "2026-07-25", "context": "Task: RecordTable.vue のレビュー", "detail": "デバッグ用 console.log が残っていた" },
+      { "date": "2026-07-29", "context": "Task: useGetRecords.ts のレビュー", "detail": "console.log でレスポンス内容を確認したまま残っていた" }
+    ],
+    "first_seen": "2026-07-20"
+  }
+]

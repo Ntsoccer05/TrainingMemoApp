@@ -1,0 +1,13 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    paths:
+        - app
+
+    # 既存コードは段階移行のため level は控えめに設定。
+    # 新規コードでレベルを上げたい場合は backend-architecture.md 側で運用ルールを検討する。
+    level: 4
+
+    tmpDir: storage/framework/phpstan
