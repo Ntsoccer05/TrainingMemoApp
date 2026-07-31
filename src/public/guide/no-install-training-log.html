@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>筋トレ記録アプリ、インストール不要のWeb版という選択肢 | トレメモ</title>
-  <meta name="description" content="筋トレMEMOやバーンフィットなど有名アプリはたくさんあるが、まず試したいだけならインストール不要のトレメモという選択肢もある。個人開発者が考えた立ち位置の話。">
+  <meta name="description" content="有名な筋トレ記録アプリはたくさんあるが、まず試したいだけならインストール不要のトレメモという選択肢もある。個人開発者が考えた立ち位置の話。">
   <link rel="canonical" href="https://training-memo.com/guide/no-install-training-log.html">
   <meta name="robots" content="index, follow">
   <meta property="og:type" content="article">
@@ -23,13 +23,21 @@
     * { box-sizing: border-box; }
     body {
       margin: 0;
+      overflow-x: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
       color: #333;
       line-height: 1.8;
       background: #fafafa;
     }
-    .site-header { background: #6b7280; padding: 16px 24px; }
+    .site-header {
+      background: #6b7280; padding: 16px 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 10px 24px;
+    }
     .site-header .logo { color: #fff; text-decoration: none; font-size: 1.25rem; font-weight: bold; }
+    .site-header nav { display: flex; gap: 20px; flex-wrap: wrap; }
+    .site-header nav a { color: #fff; text-decoration: none; font-size: 0.9rem; }
+    .site-header nav a:hover { text-decoration: underline; }
     main { max-width: 680px; margin: 0 auto; padding: 32px 20px 60px; }
     h1 { font-size: 1.6rem; line-height: 1.5; margin-bottom: 1.2em; }
     p { margin: 1em 0; }
@@ -42,16 +50,60 @@
       text-decoration: none; border-radius: 999px; font-weight: bold;
     }
     .copyright { color: #999; font-size: 0.75rem; margin-top: 20px; }
+    .badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 28px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #fff; border: 1px solid #e5e5e5; border-radius: 999px;
+      padding: 6px 14px; font-size: 0.8rem; color: #555; font-weight: 600;
+    }
+    .badge svg { width: 14px; height: 14px; flex-shrink: 0; color: #f97316; }
+    .screenshot-wrap { margin: 28px 0; }
+    .screenshot-frame { text-align: center; }
+    .screenshot-frame img {
+      width: 375px; max-width: 100%; display: inline-block; border-radius: 12px;
+      border: 1px solid #e5e5e5; box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    @media (min-width: 481px) {
+      .screenshot-frame { width: 100vw; position: relative; left: 50%; margin-left: -50vw; }
+      .screenshot-frame img { width: 768px; }
+    }
+    @media (min-width: 901px) {
+      .screenshot-frame img { width: 1280px; }
+    }
+    .screenshot-caption { text-align: center; font-size: 0.8rem; color: #999; margin-top: 8px; }
+    .feature-list { list-style: none; padding: 0; margin: 24px 0; }
+    .feature-list li { display: flex; align-items: flex-start; gap: 10px; padding: 12px 0; border-bottom: 1px solid #eee; }
+    .feature-list li:last-child { border-bottom: none; }
+    .feature-list svg { width: 20px; height: 20px; flex-shrink: 0; margin-top: 2px; color: #f97316; }
+    .feature-title { font-weight: bold; margin-bottom: 2px; }
+    .feature-desc { font-size: 0.9rem; color: #666; }
+    .inline-cta {
+      text-align: center; margin: 32px 0; padding: 24px;
+      background: #fff; border-radius: 16px; border: 1px solid #e5e5e5;
+    }
+    .inline-cta p { margin: 0 0 4px; font-weight: bold; color: #333; }
+    .inline-cta .cta-button { margin: 12px 0 0; }
   </style>
 </head>
 <body>
   <header class="site-header">
     <a href="https://training-memo.com/" class="logo">トレメモ</a>
+    <nav>
+      <a href="https://training-memo.com/login">ログイン</a>
+      <a href="https://training-memo.com/register">新規登録</a>
+      <a href="https://training-memo.com/inquiry">お問い合わせ</a>
+    </nav>
   </header>
   <main>
     <h1>筋トレ記録アプリ、インストール不要のWeb版という選択肢</h1>
 
-    <p>筋トレMEMOやバーンフィット、PUMP UPなど、筋トレ記録アプリはすでにたくさんある。どれも機能が充実していて、本気で使うならそちらの方が向いていることも多いと思う。</p>
+    <div class="badges">
+      <span class="badge"><svg viewBox="0 0 20 20" fill="none"><path d="M3 10V4a1 1 0 0 1 1-1h6l7 7a1 1 0 0 1 0 1.4l-6 6a1 1 0 0 1-1.4 0l-7-7A1 1 0 0 1 3 10Z" stroke="currentColor" stroke-width="1.5"/><circle cx="7" cy="7" r="1" fill="currentColor"/></svg>完全無料</span>
+      <span class="badge"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M3 10h14M10 3c2 2 2 12 0 14M10 3c-2 2-2 12 0 14" stroke="currentColor" stroke-width="1.5"/></svg>インストール不要</span>
+      <span class="badge"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M10 6v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>登録1分</span>
+    </div>
+
+    <p>筋トレ記録アプリはすでにたくさんある。どれも機能が充実していて、本気で使うならそちらの方が向いていることも多いと思う。</p>
 
     <p>ただ、個人的には「まず試してみたい」段階でアプリをインストールするのに少し抵抗があった。スマホの空き容量、通知の許可、アカウント登録……ちょっとしたハードルが積み重なっていく感じがする。</p>
 
@@ -59,7 +111,43 @@
 
     <p>リンクを開けばそのまま使える。試してみて合わなければ、アンインストール操作すらいらない。タブを閉じるだけでいい。</p>
 
-    <p>本格的に筋トレを追い込みたい人には、有名アプリの方が機能面で満足度が高いはず。トレメモは、そこまで作り込まれた機能は正直ないです。それでも「まず記録する習慣をつけたい」「インストールせずに使いたい」という人には、選択肢の一つになるかなと思っています。</p>
+    <div class="inline-cta">
+      <p>実際の画面はこんな感じです。気になったら無料で試せます。</p>
+      <a href="https://training-memo.com/register" class="cta-button">無料で始める</a>
+    </div>
+
+    <figure class="screenshot-wrap">
+      <div class="screenshot-frame">
+        <picture>
+          <source media="(max-width: 480px)" srcset="/guide/images/calendar-sp.jpg">
+          <source media="(max-width: 900px)" srcset="/guide/images/calendar-tablet.jpg">
+          <img src="/guide/images/calendar-pc.jpg" alt="トレメモのカレンダー画面。ブラウザだけで記録の一覧が見られる" loading="lazy" width="1360" height="778">
+        </picture>
+      </div>
+      <figcaption class="screenshot-caption">インストールなしで、ブラウザからそのまま使えるトレメモの画面</figcaption>
+    </figure>
+
+    <ul class="feature-list">
+      <li>
+        <svg viewBox="0 0 20 20" fill="none"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 1 1 1.4-1.4l2.8 2.8 6.8-6.8a1 1 0 0 1 1.4 0Z" fill="currentColor"/></svg>
+        <div><div class="feature-title">アプリのダウンロード不要</div><div class="feature-desc">リンクを開けばすぐ使える。合わなければタブを閉じるだけ</div></div>
+      </li>
+      <li>
+        <svg viewBox="0 0 20 20" fill="none"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 1 1 1.4-1.4l2.8 2.8 6.8-6.8a1 1 0 0 1 1.4 0Z" fill="currentColor"/></svg>
+        <div><div class="feature-title">Googleアカウントでログイン可</div><div class="feature-desc">メールアドレス登録が面倒なら、Googleログインで即開始</div></div>
+      </li>
+      <li>
+        <svg viewBox="0 0 20 20" fill="none"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 1 1 1.4-1.4l2.8 2.8 6.8-6.8a1 1 0 0 1 1.4 0Z" fill="currentColor"/></svg>
+        <div><div class="feature-title">スマホの容量を圧迫しない</div><div class="feature-desc">アプリのアップデート待ちも通知の許可設定も不要</div></div>
+      </li>
+    </ul>
+
+    <p>機能を絞っているぶん、画面を開いてから記録を終えるまでが早い。「まず記録する習慣をつけたい」「インストールせずに使いたい」という人には、トレメモがちょうどいいと思っています。</p>
+
+    <div class="inline-cta">
+      <p>まずはインストールなしで、その場で試せます。</p>
+      <a href="https://training-memo.com/register" class="cta-button">無料で始める</a>
+    </div>
 
     <p>ちなみに記録を保存するには、無料の会員登録だけは必要です(メールアドレス、またはGoogleアカウントでログインできます)。インストールは不要ですが、この一手間だけはご了承ください。</p>
   </main>
