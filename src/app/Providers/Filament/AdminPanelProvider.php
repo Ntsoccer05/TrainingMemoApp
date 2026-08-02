@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use Filament\AvatarProviders\UiAvatarsProvider;
+use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -51,9 +53,10 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
+                Authenticate::class,
                 AuthenticateSession::class,
             ])
             ->sidebarCollapsibleOnDesktop(false)
-            ->defaultAvatarProvider(\Filament\AvatarProviders\UiAvatarsProvider::class);
+            ->defaultAvatarProvider(UiAvatarsProvider::class);
     }
 }
