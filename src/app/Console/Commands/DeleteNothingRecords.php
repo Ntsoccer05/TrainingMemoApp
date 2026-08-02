@@ -37,36 +37,36 @@ class DeleteNothingRecords extends Command
         $recordContents = $recordContent->get();
         $recordMenus = $recordMenu->get();
         $recordStates = $recordState->get();
-        foreach($recordContents as $recordContent){
+        foreach ($recordContents as $recordContent) {
             // 記録が存在するか
-            if(empty($recordContent->weight) && 
-               empty($recordContent->rep) && 
+            if (empty($recordContent->weight) &&
+               empty($recordContent->rep) &&
                empty($recordContent->right_weight) &&
                empty($recordContent->right_rep) &&
                empty($recordContent->left_weight) &&
                empty($recordContent->left_rep)
-            ){
+            ) {
                 $TgtRecordState = $recordState->where('id', $recordContent->record_state_id)->first();
-                if(isset($TgtRecordState)){
-                    if($now->diffInDays($TgtRecordState->recorded_at) >= $this->diff_day){
+                if (isset($TgtRecordState)) {
+                    if ($now->diffInDays($TgtRecordState->recorded_at, true) >= $this->diff_day) {
                         $TgtRecordState->delete();
                     }
                 }
             }
         }
-        foreach($recordMenus as $recordMenu){
+        foreach ($recordMenus as $recordMenu) {
             // メニューの記録が存在するか
-            if(($recordMenu->recordContents->isEmpty()) && ($now->diffInDays($recordMenu->recorded_at) >= $this->diff_day)){
+            if (($recordMenu->recordContents->isEmpty()) && ($now->diffInDays($recordMenu->recorded_at, true) >= $this->diff_day)) {
                 $recordMenu->delete();
             }
         }
-        foreach($recordStates as $recordState){
+        foreach ($recordStates as $recordState) {
             // メニュー選択記録があるか
-            if(($recordState->recordMenus->isEmpty()) && ($now->diffInDays($recordState->recorded_at) >= $this->diff_day)){
+            if (($recordState->recordMenus->isEmpty()) && ($now->diffInDays($recordState->recorded_at, true) >= $this->diff_day)) {
                 $recordState->delete();
             }
             // 個々のメニューにて記録があるか
-            if(($recordState->recordContents->isEmpty()) && ($now->diffInDays($recordState->recorded_at) >= $this->diff_day)){
+            if (($recordState->recordContents->isEmpty()) && ($now->diffInDays($recordState->recorded_at, true) >= $this->diff_day)) {
                 $recordState->delete();
             }
         }

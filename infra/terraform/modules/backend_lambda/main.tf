@@ -36,18 +36,18 @@ resource "aws_security_group" "lambda" {
   # Lambdaのタイムアウトまで応答が返らない不具合が発生していたため追加する。
   egress {
     description = "DNS resolution to VPC resolver"
-    from_port    = 53
-    to_port      = 53
-    protocol     = "udp"
-    cidr_blocks  = [var.vpc_cidr_block]
+    from_port   = 53
+    to_port     = 53
+    protocol    = "udp"
+    cidr_blocks = [var.vpc_cidr_block]
   }
 
   egress {
     description = "DNS resolution to VPC resolver (TCP fallback)"
-    from_port    = 53
-    to_port      = 53
-    protocol     = "tcp"
-    cidr_blocks  = [var.vpc_cidr_block]
+    from_port   = 53
+    to_port     = 53
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr_block]
   }
 }
 
@@ -117,7 +117,7 @@ resource "aws_s3_object" "placeholder" {
 resource "aws_lambda_function" "app" {
   function_name = "${var.project_name}-laravel-app"
   role          = aws_iam_role.lambda_exec.arn
-  runtime       = "provided.al2"
+  runtime       = "provided.al2023"
   architectures = ["arm64"]
   handler       = "public/index.php"
   timeout       = 28
@@ -139,6 +139,7 @@ resource "aws_lambda_function" "app" {
       SESSION_DRIVER = "database"
       CACHE_DRIVER   = "database"
       LOG_CHANNEL    = "stderr"
+      BREF_RUNTIME   = "fpm"
     }
   }
 
@@ -155,7 +156,7 @@ resource "aws_lambda_function" "app" {
 resource "aws_lambda_function" "artisan" {
   function_name = "${var.project_name}-laravel-artisan"
   role          = aws_iam_role.lambda_exec.arn
-  runtime       = "provided.al2"
+  runtime       = "provided.al2023"
   architectures = ["arm64"]
   handler       = "artisan"
   timeout       = 120
@@ -164,7 +165,7 @@ resource "aws_lambda_function" "artisan" {
   s3_bucket = var.deploy_bucket
   s3_key    = var.deploy_object_key
 
-  layers = [var.bref_console_layer_arn]
+  layers = [var.bref_php_layer_arn]
 
   vpc_config {
     subnet_ids         = var.private_subnet_ids
@@ -177,6 +178,7 @@ resource "aws_lambda_function" "artisan" {
       SESSION_DRIVER = "database"
       CACHE_DRIVER   = "database"
       LOG_CHANNEL    = "stderr"
+      BREF_RUNTIME   = "console"
     }
   }
 
@@ -284,11 +286,11 @@ resource "aws_scheduler_schedule" "lambda_warmup" {
     role_arn = aws_iam_role.warmup_scheduler.arn
 
     input = jsonencode({
-      version         = "2.0"
-      routeKey        = "$default"
-      rawPath         = "/api/health"
-      rawQueryString  = ""
-      headers         = { accept = "application/json" }
+      version        = "2.0"
+      routeKey       = "$default"
+      rawPath        = "/api/health"
+      rawQueryString = ""
+      headers        = { accept = "application/json" }
       requestContext = {
         http = {
           method   = "GET"

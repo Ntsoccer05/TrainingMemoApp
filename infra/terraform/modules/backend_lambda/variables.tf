@@ -44,19 +44,14 @@ variable "deploy_object_key" {
 }
 
 # arm64(Graviton2)版。x86版よりGB秒あたり課金が約20%安く、コールドスタート時のCPU性能も同等以上。
-# バージョン番号(:101)は composer.json で固定している bref/bref ^2.4 に同梱された
-# vendor/bref/bref/layers.json (ap-northeast-1 / arm-php-82-fpm) の値。
-# 新しいBrefバージョンに上げた際は `aws lambda list-layer-versions --layer-name arm-php-82-fpm --region ap-northeast-1`
+# Bref 3.0からAmazon Linux 2023(provided.al2023)ベースに移行し、FPM/console/functionレイヤーが
+# 単一の arm-php-82 レイヤーに統合された(動作モードはLambda関数側の BREF_RUNTIME 環境変数で切り替える)。
+# アカウントID(873528684822)・バージョン番号(:23)は composer.json で固定している bref/bref ^3.0 に
+# 同梱された vendor/bref/bref/layers.json (ap-northeast-1 / arm-php-82) の値。
+# 新しいBrefバージョンに上げた際は `aws lambda list-layer-versions --layer-name arm-php-82 --region ap-northeast-1`
 # で最新バージョンを確認し、必要なら更新すること。
 variable "bref_php_layer_arn" {
-  description = "Bref公式 arm-php-82-fpm レイヤーARN(ap-northeast-1, arm64)"
+  description = "Bref公式 arm-php-82 レイヤーARN(ap-northeast-1, arm64, provided.al2023)"
   type        = string
-  default     = "arn:aws:lambda:ap-northeast-1:534081306603:layer:arm-php-82-fpm:101"
-}
-
-# arm64(Graviton2)版のコンソール/CLI実行用レイヤー。バージョン番号の出典・更新方法はFPM版と同じ。
-variable "bref_console_layer_arn" {
-  description = "Bref公式 arm-php-82(コンソール/CLI実行用、FPMではない)レイヤーARN(ap-northeast-1, arm64)"
-  type        = string
-  default     = "arn:aws:lambda:ap-northeast-1:534081306603:layer:arm-php-82:101"
+  default     = "arn:aws:lambda:ap-northeast-1:873528684822:layer:arm-php-82:23"
 }

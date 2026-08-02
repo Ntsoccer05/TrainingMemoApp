@@ -6,10 +6,10 @@ use App\Filament\Resources\RecordMenuResource\Pages;
 use App\Filament\Resources\RecordMenuResource\RelationManagers;
 use App\Models\RecordMenu;
 use Filament\Forms;
-use Filament\Resources\Form;
+use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Resources\Table;
 use Filament\Tables;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -32,7 +32,7 @@ class RecordMenuResource extends Resource
                     ->relationship('menu', 'id'),
                 Forms\Components\Select::make('record_state_id')
                     ->relationship('recordState', 'id'),
-                Forms\Components\DatePicker::make('recorded_at')->displayFormat('Y年m月d日')
+                Forms\Components\DatePicker::make('recorded_at')->native(false)->displayFormat('Y年m月d日')
                     ->required(),
             ]);
     }

@@ -130,11 +130,11 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
-          # RUNTIME_CLASSを明示しないと、Brefのレイヤー(bootstrap)は
-          # デフォルトで Bref\FunctionRuntime\Main を使ってしまう。
-          # これはハンドラーファイルをそのままrequireして「返り値」を期待する汎用ランタイムのため、
-          # console用のartisan(exit()で終了する素のCLIスクリプト)やHTTP用のpublic/index.phpとは相性が悪く、
-          # 期待した ConsoleRuntime / FpmRuntime が使われず、ハングやクラッシュの原因になっていた。
+          # Bref 3.0からは RUNTIME_CLASS ではなく BREF_RUNTIME 環境変数(fpm/console/function)で
+          # 動作モードを切り替える方式に統一された(FPM/console用レイヤーが単一の arm-php-82 に統合されたため)。
+          # これを指定しないとレイヤーがどのランタイムで起動すべきか判定できず、
+          # console用のartisan(exit()で終了する素のCLIスクリプト)やHTTP用のpublic/index.phpが
+          # 正しく動作しない(ハングやクラッシュの原因になる)。
           jq -n \
             --arg db_database "$DB_DATABASE" \
             --arg db_password "$DB_PASSWORD" \
@@ -166,7 +166,7 @@ jobs:
               MAIL_FROM_NAME: "トレメモ",
               GOOGLE_CLIENT_ID: $google_client_id,
               GOOGLE_CLIENT_SECRET: $google_client_secret,
-              RUNTIME_CLASS: "Bref\\ConsoleRuntime\\Main"
+              BREF_RUNTIME: "console"
             }}' > /tmp/lambda-env-artisan.json
 
           jq -n \
@@ -200,7 +200,7 @@ jobs:
               MAIL_FROM_NAME: "トレメモ",
               GOOGLE_CLIENT_ID: $google_client_id,
               GOOGLE_CLIENT_SECRET: $google_client_secret,
-              RUNTIME_CLASS: "Bref\\FpmRuntime\\Main"
+              BREF_RUNTIME: "fpm"
             }}' > /tmp/lambda-env-app.json
 
           aws lambda update-function-configuration \

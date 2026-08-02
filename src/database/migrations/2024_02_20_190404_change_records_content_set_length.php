@@ -18,9 +18,9 @@ return new class extends Migration
             $table->integer('right_rep')->length(3)->nullable()->change();
             $table->integer('left_rep')->length(3)->nullable()->change();
             $table->integer('rep')->length(3)->nullable()->change();
-            $table->float('right_volume', 11,3)->nullable()->change();
-            $table->float('left_volume', 11,3)->nullable()->change();
-            $table->float('volume', 11,3)->nullable()->change();
+            $table->float('right_volume')->nullable()->change();
+            $table->float('left_volume')->nullable()->change();
+            $table->float('volume')->nullable()->change();
         });
     }
 

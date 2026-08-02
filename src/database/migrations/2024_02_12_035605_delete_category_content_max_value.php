@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::table('categories', function (Blueprint $table) {
             //
-            $table->string('content')->change();
+            $table->string('content', 4)->change();
         });
     }
 
