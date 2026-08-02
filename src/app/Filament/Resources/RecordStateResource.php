@@ -6,10 +6,10 @@ use App\Filament\Resources\RecordStateResource\Pages;
 use App\Filament\Resources\RecordStateResource\RelationManagers;
 use App\Models\RecordState;
 use Filament\Forms;
-use Filament\Resources\Form;
+use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Resources\Table;
 use Filament\Tables;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -27,7 +27,7 @@ class RecordStateResource extends Resource
                     ->relationship('user', 'id')
                     ->required(),
                 Forms\Components\TextInput::make('bodyWeight'),
-                Forms\Components\DatePicker::make('recorded_at')->displayFormat('Y年m月d日')
+                Forms\Components\DatePicker::make('recorded_at')->native(false)->displayFormat('Y年m月d日')
                     ->required(),
             ]);
     }

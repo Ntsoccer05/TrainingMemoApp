@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->float('target_weight', 8, 1)->nullable()->after('is_admin');
+            $table->float('target_weight')->nullable()->after('is_admin');
         });
     }
 

@@ -2,9 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Record;
-use App\Models\RecordContent;
-use App\Models\RecordMenu;
 use App\Models\RecordState;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -36,10 +33,10 @@ class RecordMng extends Command
     {
         $now = Carbon::now();
         $recordStates = $recordState->get();
-        foreach($recordStates as $record){
+        foreach ($recordStates as $record) {
             $baseTime = new Carbon($record->updated_at ?? $record->created_at);
             //記録開始して２年経ったら削除する
-            if($now->diffInMonths($baseTime) >= $this->diff_month){
+            if ($now->diffInMonths($baseTime, true) >= $this->diff_month) {
                 $record->delete();
             }
         }
@@ -50,16 +47,16 @@ class RecordMng extends Command
     public function deleteRec($targetRecState)
     {
         $RecContents = $targetRecState->recordContents()->get();
-        foreach($RecContents as $RecContent){
+        foreach ($RecContents as $RecContent) {
             $menu = $RecContent->menu()->first();
-            if(isset($menu)){
-                if($menu->oneSide === 0){
-                    if((!isset($targetRecState->bodyWeight)) && (!isset($RecContent->weight))){
+            if (isset($menu)) {
+                if ($menu->oneSide === 0) {
+                    if ((! isset($targetRecState->bodyWeight)) && (! isset($RecContent->weight))) {
                         $targetRecState->delete();
                     }
-                }elseif($menu->oneSide === 1){
+                } elseif ($menu->oneSide === 1) {
                     // 片方ずつ記録する場合
-                    if((!isset($targetRecState->bodyWeight)) && ((!isset($RecContent->left_weight)) || (!isset($RecContent->right_weight)))){
+                    if ((! isset($targetRecState->bodyWeight)) && ((! isset($RecContent->left_weight)) || (! isset($RecContent->right_weight)))) {
                         $targetRecState->delete();
                     }
                 }

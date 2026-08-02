@@ -13,6 +13,7 @@ use Laravel\Sanctum\HasApiTokens;
 use App\Mail\BareMail;
 use App\Notifications\PasswordResetNotification;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -52,7 +53,7 @@ class User extends Authenticatable implements FilamentUser
         'email_verified_at' => 'datetime',
         'target_weight_date' => 'date',
     ];
-    public function canAccessFilament(): bool
+    public function canAccessPanel(Panel $panel): bool
     {
         return str_ends_with($this->email, '@gmail.com');
     }
