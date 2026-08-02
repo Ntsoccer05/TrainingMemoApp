@@ -10,6 +10,11 @@ import userSessionStorage from "./utils/userSessionStorage";
 let loginUserRequest: Promise<void> | null = null;
 let latestRecordStateRequest: Promise<void> | null = null;
 let loginStateRequest: Promise<void> | null = null;
+// SelectMenu.vueの体重入力は@blurで発火し、直後のメニュー選択クリックで即座に画面遷移するため、
+// この保存リクエストの完了を待たずにgetLatestRecordStateが呼ばれるレースが起こり得る。
+// 進行中であればgetLatestRecordStateがこれを待つことで、無効化(invalidate)前の古いキャッシュを
+// 遷移先が読んでしまう(体重が反映されない)のを防ぐ。
+let weightUpdateRequest: Promise<void> | null = null;
 
 export default createStore({
     state: {
@@ -85,11 +90,7 @@ export default createStore({
                 await loginStateRequest;
                 return;
             }
-            const {
-                getSessionLoginUser,
-                setSessionLoginUser,
-                removeSessionLoginUser,
-            } = userSessionStorage();
+            const { setSessionLoginUser } = userSessionStorage();
             loginStateRequest = axios
                 .get("/api/users")
                 .then((res) => {
@@ -105,7 +106,7 @@ export default createStore({
                     // ログイン状態取得
                     state.isLogined = false;
                     const { dispAlert } = useNotLoginedRedirect(err);
-                    if ((dispAlert.value = true)) {
+                    if (dispAlert.value) {
                         state.dispAlertModal = true;
                     }
                 })
@@ -134,7 +135,7 @@ export default createStore({
                     sessionStorage.clear();
                     // ログインしていない状態だとホーム画面へリダイレクト
                     const { dispAlert } = useNotLoginedRedirect(err);
-                    if ((dispAlert.value = true)) {
+                    if (dispAlert.value) {
                         state.dispAlertModal = true;
                     }
                 })
@@ -145,6 +146,13 @@ export default createStore({
         },
 
         async getLatestRecordState({ state }) {
+            // 進行中の体重更新(updateWeight)があれば、そのinvalidate反映を待ってから
+            // 再フェッチ要否を判定する。待たずに判定すると、体重保存の完了(invalidate)前に
+            // 古いキャッシュのままここを通過してしまい、直後に遷移した画面へ更新前の体重が
+            // 表示され続けるレースが起きる。
+            if (weightUpdateRequest) {
+                await weightUpdateRequest;
+            }
             // 既に取得済み(かつrecord/create成功以降まだ無効化されていない)なら再フェッチしない。
             // SelectMenu.vueとEditableMenuTable.vueなど同一画面の複数コンポーネントが
             // それぞれ呼び出しても、実際のHTTPリクエストは画面遷移につき1回で済む。
@@ -166,7 +174,7 @@ export default createStore({
                 .catch((err) => {
                     // ログインしていない状態だとホーム画面へリダイレクト
                     const { dispAlert } = useNotLoginedRedirect(err);
-                    if ((dispAlert.value = true)) {
+                    if (dispAlert.value) {
                         state.dispAlertModal = true;
                     }
                 })
@@ -174,6 +182,23 @@ export default createStore({
                     latestRecordStateRequest = null;
                 });
             await latestRecordStateRequest;
+        },
+
+        // SelectMenu.vueの体重入力欄(@blur)から呼ばれる。呼び出し側は結果を待たずに
+        // 画面遷移することがあるため、進行中リクエストをモジュール変数weightUpdateRequestに
+        // 保持し、getLatestRecordStateがそれを待てるようにしている。
+        async updateWeight({ state }, payload: { user_id: number; recording_day: string; weight: string }) {
+            weightUpdateRequest = axios
+                .post("/api/record/edit", payload)
+                .then(() => {
+                    // bodyWeight/updated_atが変わり、キャッシュされたlatestRecordが古くなるため無効化する
+                    state.latestRecordStateFetched = false;
+                })
+                .catch(() => {})
+                .finally(() => {
+                    weightUpdateRequest = null;
+                });
+            await weightUpdateRequest;
         },
     },
 });

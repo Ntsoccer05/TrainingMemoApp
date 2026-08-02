@@ -4,10 +4,9 @@ namespace App\Providers;
 
 // use Illuminate\Support\Facades\Gate;
 
-use App\Mail\BareMail;
-use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -27,9 +26,6 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->registerPolicies();
-
-        //
         ResetPassword::createUrlUsing(function (User $user, string $token) {
             // メールのパスワードリセットボタン押下時の遷移先
             return config('app.url').'/password/reset?token121212121='.$token.'1212121212&email='.$user->email;

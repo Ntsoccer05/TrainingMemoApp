@@ -121,9 +121,6 @@ const editable = ref<boolean>(false);
 const hasCategory = ref<boolean>(true);
 const hasMenu = ref<boolean>(true);
 const hasRecord = ref<boolean>(false);
-// DOM取得のため
-const deleteFunc = ref(null);
-const deleteCategory = ref(null);
 
 const dispAlertModal = ref<boolean>(false);
 
@@ -251,22 +248,20 @@ const getMenus = async () => {
         }
       }
     })
-    .catch((err) => {});
+    .catch(() => {});
 };
 
 //体重を記録する
 const postWeight = async () => {
-  await axios
-    .post("/api/record/edit", {
-      user_id: loginUser.value.id,
-      recording_day: latestRecord.value.recorded_at,
-      weight: weight.value,
-    })
-    .then((res) => {
-      // bodyWeight/updated_atが変わり、キャッシュされたlatestRecordが古くなるため無効化する
-      store.commit("invalidateLatestRecordState");
-    })
-    .catch((err) => {});
+  // store側でリクエストをモジュール変数に保持し、直後の画面遷移先でgetLatestRecordStateが
+  // このリクエストの完了(invalidate反映)を待てるようにしている(SelectMenu.vue内で個別に
+  // invalidateLatestRecordStateをcommitするだけだと、blur後すぐクリックで遷移した際に
+  // 遷移先の再取得判定がinvalidate前に走ってしまい、体重が更新前のまま表示されるレースがあった)。
+  await store.dispatch("updateWeight", {
+    user_id: loginUser.value.id,
+    recording_day: latestRecord.value.recorded_at,
+    weight: weight.value,
+  });
 };
 
 //全角→半角
@@ -279,9 +274,6 @@ const replaceFullToHalf = (str: string) => {
 // valはString
 const validateWeight = (val: string) => {
   val = replaceFullToHalf(val);
-  // 小数点を含むか？
-  let oldVal = val;
-  const decPoint = oldVal.indexOf(".");
   // replaceは型がStringのもののみ適用できる(replaceはそのものの値自体は変えないので代入する必要あり)
   // 数字または小数点以外を無効とする
   val = val.replace(/[^0-9|.]/g, "");
@@ -331,10 +323,6 @@ const menuScroll = () => {
 };
 
 onMounted(async () => {
-  // DOM取得のため
-  const deleteFuncDom = deleteFunc.value;
-  const deleteCategoryDom = deleteCategory.value;
-
   const sessionLoginUser = getSessionLoginUser();
   if (sessionLoginUser) {
     loginUser.value = sessionLoginUser;
@@ -345,11 +333,11 @@ onMounted(async () => {
     dispAlertModal.value = true;
   }
   if (route.params.recordId) {
-    await getRecords(loginUser.value.id, recorded_day).then((res) => {
+    await getRecords(loginUser.value.id, recorded_day).then(() => {
       store.commit("compGetData", true);
     });
   } else if (loginUser.value.id) {
-    await getRecords(loginUser.value.id).then((res) => {
+    await getRecords(loginUser.value.id).then(() => {
       store.commit("compGetData", true);
     });
   }
@@ -369,7 +357,7 @@ const deleteMenu = async (next: NavigationGuardNext) => {
       user_id: loginUser.value.id,
       recorded_at: recorded_day,
     })
-    .then((res) => {
+    .then(() => {
       store.commit("compGetData", false);
       // レコードが削除され最新レコードが変わりうるため、キャッシュを無効化する
       store.commit("invalidateLatestRecordState");
@@ -401,11 +389,11 @@ onBeforeRouteLeave(
       if (compGetData.value === false) {
         await getLoginUser();
         if (route.params.recordId) {
-          await getRecords(loginUser.value.id, recorded_day).then(async (res) => {
+          await getRecords(loginUser.value.id, recorded_day).then(async () => {
             await deleteOrMaintainRecordState(next);
           });
         } else if (loginUser.value.id) {
-          await getRecords(loginUser.value.id).then(async (res) => {
+          await getRecords(loginUser.value.id).then(async () => {
             await deleteOrMaintainRecordState(next);
           });
         }
