@@ -141,6 +141,49 @@ resource "aws_cloudfront_distribution" "main" {
     }
   }
 
+  # Filament v3のJS/CSSアセット配信用ルート。
+  # v3では `php artisan filament:assets` で public/js/filament, public/css/filament に
+  # 実ファイルとして公開する方式に変わり、上記の /filament/* (v2のcore_pathルート)とは
+  # 別パスになった。これが抜けていたため、上記と同じ404→SPAフォールバックの障害が
+  # 再発していた(Filament v3移行時の2026-08-02に発覚)。
+  ordered_cache_behavior {
+    path_pattern           = "/js/filament/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "api-gateway"
+    viewer_protocol_policy = "https-only"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+
+    forwarded_values {
+      query_string = true
+      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin"]
+      cookies {
+        forward = "all"
+      }
+    }
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/css/filament/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "api-gateway"
+    viewer_protocol_policy = "https-only"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+
+    forwarded_values {
+      query_string = true
+      headers      = ["Authorization", "Accept", "Content-Type", "Referer", "Origin"]
+      cookies {
+        forward = "all"
+      }
+    }
+  }
+
   ordered_cache_behavior {
     path_pattern           = "/sanctum/*"
     allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
