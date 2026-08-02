@@ -95,6 +95,7 @@ jobs:
         run: |
           php artisan route:cache
           php artisan event:cache
+          php artisan filament:assets
 
       - name: Build deployment package
         run: |

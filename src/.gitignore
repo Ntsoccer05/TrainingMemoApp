@@ -2,6 +2,8 @@
 /public/build
 /public/hot
 /public/storage
+/public/css/filament
+/public/js/filament
 /storage/*.key
 /storage/framework/phpstan
 /vendor
