@@ -17,7 +17,7 @@ class RecordMenuResource extends Resource
 {
     protected static ?string $model = RecordMenu::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-collection';
+    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
 
     public static function form(Form $form): Form
     {

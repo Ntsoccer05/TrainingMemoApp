@@ -17,7 +17,7 @@ class RecordStateResource extends Resource
 {
     protected static ?string $model = RecordState::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-collection';
+    protected static ?string $navigationIcon = 'heroicon-o-flag';
 
     public static function form(Form $form): Form
     {

@@ -17,7 +17,7 @@ class RecordContentResource extends Resource
 {
     protected static ?string $model = RecordContent::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-collection';
+    protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     public static function form(Form $form): Form
     {
