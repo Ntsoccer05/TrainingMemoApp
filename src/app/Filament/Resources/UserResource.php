@@ -3,15 +3,13 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
-use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Hash;
 
 class UserResource extends Resource
 {
@@ -21,7 +19,6 @@ class UserResource extends Resource
 
     public static function form(Form $form): Form
     {
-        // $isCreate = $form->getOperation() === "create";
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
@@ -29,15 +26,15 @@ class UserResource extends Resource
                 Forms\Components\TextInput::make('email')
                     ->email()
                     ->maxLength(255),
-                    
+
                 Forms\Components\DateTimePicker::make('email_verified_at'),
-                // パスワードも更新されるため
+                // 作成時は必須、編集時は空欄なら変更しない
                 Forms\Components\TextInput::make('password')
                     ->password()
                     ->maxLength(255)
-                    ->required()
-                    //新規作成時だけ必須
-                    ->visibleOn('create'),
+                    ->dehydrateStateUsing(fn (string $state): string => Hash::make($state))
+                    ->dehydrated(fn (?string $state): bool => filled($state))
+                    ->required(fn (string $operation): bool => $operation === 'create'),
                 Forms\Components\Toggle::make('is_admin'),
             ]);
     }
@@ -67,14 +64,14 @@ class UserResource extends Resource
                 Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
-    
+
     public static function getRelations(): array
     {
         return [
             //
         ];
     }
-    
+
     public static function getPages(): array
     {
         return [
@@ -82,5 +79,5 @@ class UserResource extends Resource
             'create' => Pages\CreateUser::route('/create'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
-    }    
+    }
 }
